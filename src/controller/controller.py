@@ -1,8 +1,8 @@
-from src.model.model import Model
+from src.model.model import eReg
 from src.view.main_window import MainWindow
 
 
 class Controller:
-    def __init__(self, model: Model, view: MainWindow) -> None:
+    def __init__(self, model: eReg, view: MainWindow) -> None:
         self.model = model
         self.view = view

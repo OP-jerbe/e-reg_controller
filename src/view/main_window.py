@@ -5,11 +5,11 @@ from PySide6.QtWidgets import QMainWindow
 from qt_material import apply_stylesheet
 
 import src.helpers.helpers as h
-from src.model.model import Model
+from src.model.model import eReg
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, model: Model) -> None:
+    def __init__(self, model: eReg) -> None:
         super().__init__()
         self.model = model
         self.create_gui()

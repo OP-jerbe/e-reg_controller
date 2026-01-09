@@ -13,25 +13,21 @@ ERROR_RESPONSES = {
 }
 
 
-class Model:
+class eReg:
     DEFAULT_PORT: int = 10001
     DEFAULT_TIMEOUT: float = 5.0
 
     def __init__(self) -> None:
         self._lock = Lock()
         self._sock: Optional[SocketType] = None
-        self._term_char = '\n'
-        self.defalut_ip_address = self._get_IP_address()
+        self.default_ip_address = self._get_IP_address()
 
-    @staticmethod
-    def _get_IP_address() -> str:
-        config_data = h.load_ini()
-        ip = h.find_selection(config_data, 'IPAddress', 'IPAddress')
-        return ip
+        try:
+            self.open_connection(ip=self.default_ip_address)
+        except:
+            pass
 
-    # --- Connections Methods ---
-
-    def _send_query(self, query: str) -> str:
+    def _send_query(self, query: str, term_char: str = '\n') -> str:
         """
         Sends a command query to the HVPS, waits for a response, and handles protocol-level errors.
 
@@ -45,8 +41,8 @@ class Model:
         if not self._sock:
             raise ConnectionError('Socket is not connected')
         # print(f'Command: {query}')
-        if not query.endswith(self._term_char):
-            query += self._term_char
+        if not query.endswith(term_char):
+            query += term_char
 
         with self._lock:
             try:
@@ -65,6 +61,14 @@ class Model:
             )
 
         return response_str
+
+    # --- Connections Methods ---
+
+    @staticmethod
+    def _get_IP_address() -> str:
+        config_data = h.load_ini()
+        ip = h.find_selection(config_data, 'IPAddress', 'IPAddress')
+        return ip
 
     def open_connection(
         self,
@@ -85,7 +89,7 @@ class Model:
                 or None if a connection error occurred.
         """
         if not ip:
-            ip = self.defalut_ip_address
+            ip = self.default_ip_address
         try:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.settimeout(timeout)
@@ -106,173 +110,15 @@ class Model:
             print('Socket closed')
             self._sock = None
 
-    # --- Read Commands ---
+    # --- Metadata ---
 
     @property
-    def model_num(self) -> str:
+    def model_number(self) -> str:
         """
         GETTER: Reads the model number of the device.
         """
         command = 'mnc'
         return self._send_query(command).replace('mnr:', '').strip()
-
-    @property
-    def fault_pressure(self) -> str:
-        """
-        GETTER: Reads the current default fault pressure setting in psig.
-        """
-        command = 'rfpc'
-        return self._send_query(command).replace('rfpr:', '').strip()
-
-    @fault_pressure.setter
-    def fault_pressure(self, value: int) -> None:
-        """
-        SETTER: Sets the default fault pressure setting.
-
-        Args:
-            value (int): The pressure setting in psig the device goes to if there is a fault or power loss.
-                Must be be between 0 and the calibrated pressure (set in config.ini file).
-        """
-        if not isinstance(value, int):
-            raise ValueError(f'Received {type(value).__name__} but expected int.')
-
-        if not 0 <= value <= float(self.calibration_pressure):
-            raise ValueError(
-                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
-            )
-
-        command = f'sfpc:{value}'
-        self._send_query(command)
-
-    @property
-    def heartbeat(self) -> str:
-        """
-        GETTER: Reads the current default heartbeat timer setting.
-        """
-        command = 'rhbc'
-        return self._send_query(command).replace('rhbr:', '').strip()
-
-    @heartbeat.setter
-    def heartbeat(self, value: int) -> None:
-        """
-        SETTER: Sets the default heartbeat timer setting.
-
-        Args:
-            value (int): Timeout setting in milliseconds. Must be between `50-65000` or `0` to disable.
-        """
-        if not isinstance(value, int):
-            raise ValueError(f'Received {type(value).__name__} but expected int.')
-
-        if not 50 <= value <= 65000 or value != 0:
-            raise ValueError(
-                'Invalid heartbeat value. Must be `0` to disable or set between `50-65000`.'
-            )
-            return
-        command = f'shbc:{value}'
-        self._send_query(command)
-
-    @property
-    def defaults(self) -> str:
-        """
-        GETTER: Reads current device defaults in the form
-            [samplesTaken],[sampleRate],[heartBeatTime],[faultPressure],[relayFaultTime],[CalibrationPressure]
-        """
-        command = 'rdc'
-        return self._send_query(command).replace('rdr:', '').strip()
-
-    @property
-    def samples_taken(self) -> str:
-        """
-        GETTER: Reads the number of samples taken from the ***defaults*** string.
-        """
-        defaults: list = self.defaults.split(',')
-        return defaults[0]
-
-    @property
-    def calibration_pressure(self) -> str:
-        """
-        GETTER: Reads the calibration pressure from the ***defaults*** string.
-        """
-        defaults = self.defaults.split(',')
-        return defaults[-1]
-
-    @property
-    def pressure(self) -> str:
-        """
-        GETTER: Reads the current output pressure value.
-        """
-        command = 'rpc'
-        return self._send_query(command).replace('rpr:', '').strip()
-
-    @pressure.setter
-    def pressure(self, value: int) -> None:
-        """
-        SETTER: Sets the output pressure setting.
-
-        Args:
-            value (int): The pressure setting in psig.
-                Must be between 0 and the calibrated pressure (set in the config.ini file).
-        """
-        if not isinstance(value, int):
-            raise ValueError(f'Received {type(value).__name__} but expected int.')
-
-        if not 0 <= value <= float(self.calibration_pressure):
-            raise ValueError(
-                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
-            )
-
-        command = f'spc:{value}'
-        self._send_query(command)
-
-    @property
-    def relay_timeout(self) -> str:
-        """
-        GETTER: Reads the current relay timout command in milliseconds.
-        """
-        command = 'rrtc'
-        return self._send_query(command).replace('rrtr:', '')
-
-    @relay_timeout.setter
-    def relay_timeout(self, value: int) -> None:
-        """
-        SETTER: Sets the relay timeout command.
-
-        Args:
-            value (int): The timeout setting in milliseconds
-        """
-        if not isinstance(value, int):
-            raise ValueError(f'Received {type(value).__name__} but expected int.')
-
-        if not 0 <= value <= 65000:
-            raise ValueError('Invalid relay timeout value. Must be between 0 and 65000')
-
-        command = f'srtc:{value}'
-        self._send_query(command)
-
-    @property
-    def sample_rate(self) -> str:
-        """
-        GETTER: Reads the current default time between samples in milliseconds.
-        """
-        command = 'rsrc'
-        return self._send_query(command).replace('rsrr:', '').strip()
-
-    @sample_rate.setter
-    def sample_rate(self, value: int) -> None:
-        """
-        SETTER: Sets the default time between samples in milliseconds.
-
-        Args:
-            value (int): The sample rate in milliseconds.
-        """
-        if not isinstance(value, int):
-            raise ValueError(f'Received {type(value).__name__} but expected int.')
-
-        if not 1 <= value <= 200:
-            raise ValueError('Invalid sample rate. Must be between 1 and 200.')
-
-        command = f'ssrc:{value}'
-        self._send_query(command)
 
     @property
     def metadata(self) -> str:
@@ -307,14 +153,186 @@ class Model:
         metadata = self.metadata.split(', ')
         return metadata[-1]
 
+    # --- Default GETTERS and SETTERS ---
+
+    @property
+    def defaults(self) -> str:
+        """
+        GETTER: Reads current device defaults in the form
+            [samplesTaken],[sampleRate],[heartBeatTime],[faultPressure],[relayFaultTime],[CalibrationPressure]
+        """
+        command = 'rdc'
+        return self._send_query(command).replace('rdr:', '').strip()
+
+    @property
+    def samples_taken(self) -> str:
+        """
+        GETTER: Reads the number of samples taken from the ***defaults*** string.
+        """
+        defaults: list = self.defaults.split(',')
+        return defaults[0]
+
+    @property
+    def sample_rate(self) -> str:
+        """
+        GETTER: Reads the current default time between samples in milliseconds.
+        """
+        command = 'rsrc'
+        return self._send_query(command).replace('rsrr:', '').strip()
+
+    @sample_rate.setter
+    def sample_rate(self, value: int) -> None:
+        """
+        SETTER: Sets the default time between samples in milliseconds.
+
+        Args:
+            value (int): The sample rate in milliseconds.
+        """
+        if not isinstance(value, int):
+            raise ValueError(f'Received {type(value).__name__} but expected int.')
+
+        if not 1 <= value <= 200:
+            raise ValueError('Invalid sample rate. Must be between 1 and 200.')
+
+        command = f'ssrc:{value}'
+        self._send_query(command)
+
+    @property
+    def heartbeat(self) -> str:
+        """
+        GETTER: Reads the current default heartbeat timer setting.
+        """
+        command = 'rhbc'
+        return self._send_query(command).replace('rhbr:', '').strip()
+
+    @heartbeat.setter
+    def heartbeat(self, value: int) -> None:
+        """
+        SETTER: Sets the default heartbeat timer setting.
+
+        Args:
+            value (int): Timeout setting in milliseconds. Must be between `50-65000` or `0` to disable.
+        """
+        if not isinstance(value, int):
+            raise ValueError(f'Received {type(value).__name__} but expected int.')
+
+        if not 50 <= value <= 65000 or value != 0:
+            raise ValueError(
+                'Invalid heartbeat value. Must be `0` to disable or set between `50-65000`.'
+            )
+            return
+        command = f'shbc:{value}'
+        self._send_query(command)
+
+    @property
+    def fault_pressure(self) -> str:
+        """
+        GETTER: Reads the current default fault pressure setting in psig.
+        """
+        command = 'rfpc'
+        return self._send_query(command).replace('rfpr:', '').strip()
+
+    @fault_pressure.setter
+    def fault_pressure(self, value: int) -> None:
+        """
+        SETTER: Sets the default fault pressure setting.
+
+        Args:
+            value (int): The pressure setting in psig the device goes to if there is a fault or power loss.
+                Must be be between 0 and the calibrated pressure (set in config.ini file).
+        """
+        if not isinstance(value, int):
+            raise ValueError(f'Received {type(value).__name__} but expected int.')
+
+        if not 0 <= value <= float(self.calibration_pressure):
+            raise ValueError(
+                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
+            )
+
+        command = f'sfpc:{value}'
+        self._send_query(command)
+
+    @property
+    def relay_timeout(self) -> str:
+        """
+        GETTER: Reads the current relay timout command in milliseconds.
+        """
+        command = 'rrtc'
+        return self._send_query(command).replace('rrtr:', '')
+
+    @relay_timeout.setter
+    def relay_timeout(self, value: int) -> None:
+        """
+        SETTER: Sets the relay timeout command.
+
+        Args:
+            value (int): The timeout setting in milliseconds
+        """
+        if not isinstance(value, int):
+            raise ValueError(f'Received {type(value).__name__} but expected int.')
+
+        if not 0 <= value <= 65000:
+            raise ValueError('Invalid relay timeout value. Must be between 0 and 65000')
+
+        command = f'srtc:{value}'
+        self._send_query(command)
+
+    @property
+    def calibration_pressure(self) -> str:
+        """
+        GETTER: Reads the calibration pressure from the ***defaults*** string.
+        """
+        defaults = self.defaults.split(',')
+        return defaults[-1]
+
+    # --- Pressure GETTER and SETTER ---
+
+    @property
+    def pressure(self) -> str:
+        """
+        GETTER: Reads the current output pressure value.
+            Note: If product is calibrated in units other than psig and/or the product
+            operates from vacuum to positive pressure, the command will be from 0-100%
+            of the product range.
+        """
+        command = 'rpc'
+        return self._send_query(command).replace('rpr:', '').strip()
+
+    @pressure.setter
+    def pressure(self, value: float) -> None:
+        """
+        SETTER: Sets the output pressure setting.
+            Note: If product is calibrated in units other than psig and/or the product
+            operates from vacuum to positive pressure, the command will be from 0-100%
+            of the product range.
+
+        Args:
+            value (int): The pressure setting in psig.
+                Must be between 0 and the calibrated pressure (set in the config.ini file).
+        """
+        if not isinstance(value, int | float):
+            raise ValueError(
+                f'Received {type(value).__name__} but expected int or float.'
+            )
+
+        if not 0 <= value <= float(self.calibration_pressure):
+            raise ValueError(
+                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
+            )
+
+        command = f'spc:{value}'
+        self._send_query(command)
+
+    # --- Methods ---
+
     def send_buffer(self) -> str:
         """
-        Reads the sample buffer in a space delimited format where vvv.vv is a value.
-            Will return a *send buffer error "sbe"* response if a send buffer request
-            is sent to the device before the buffer is full.
+        Asks the device to send the sample buffer in a space delimited format where
+        vvv.vv is a value. Will return a *send buffer error "sbe"* response if a send
+        buffer request is sent to the device before the buffer is full.
         """
         command = 'sbc'
-        return self._send_query(command).replace('sbr:', '')
+        return self._send_query(command).replace('sbr: ', '')
 
     def start_sampling(self, number: int | None = None) -> None:
         """
@@ -354,21 +372,21 @@ class Model:
         command = f'sszc:{number}'
         self._send_query(command)
 
-    def test_cont_A(self) -> None:
+    def test_contact_A(self) -> None:
         """
         Test contact A: close A, open B.
         """
         command = 'tac'
         self._send_query(command)
 
-    def test_cont_B(self) -> None:
+    def test_contact_B(self) -> None:
         """
         Test contact B: close B, open A.
         """
         command = 'tbc'
         self._send_query(command)
 
-    def test_cont_norm(self) -> None:
+    def test_contact_norm(self) -> None:
         """
         Both contacts are returned to the closed position.
         """
@@ -397,29 +415,33 @@ class NegativeAcknowledgementError(Exception):
 
 
 if __name__ == '__main__':
-    ereg = Model()
-    ereg.open_connection()
-    model_num = ereg.model_num
-    fault_pressure = ereg.fault_pressure
-    heartbeat = ereg.heartbeat
-    defaults = ereg.defaults
-    pressure_command = ereg.pressure
-    relay_timeout_command = ereg.relay_timeout
-    sample_rate = ereg.sample_rate
-    calibration_pressure = ereg.calibration_pressure
-    metadata = ereg.metadata
+    ereg = eReg()
+
+    model_num = ereg.model_number
+    print(f'{model_num = }')
+
+    # metadata
     serial_number = ereg.serial_number
     software_ver = ereg.software_ver
     pc_board_rev = ereg.pc_board_rev
-    print(f'{model_num = }')
-    print(f'{fault_pressure = }')
-    print(f'{heartbeat = }')
-    print(f'{defaults = }')
-    print(f'{pressure_command = }')
-    print(f'{relay_timeout_command = }')
-    print(f'{sample_rate = }')
-    print(f'{calibration_pressure = }')
-    print(f'{metadata = }')
     print(f'{serial_number = }')
     print(f'{software_ver = }')
     print(f'{pc_board_rev = }')
+
+    # defaults
+    samples_taken = ereg.samples_taken
+    sample_rate = ereg.sample_rate
+    heartbeat = ereg.heartbeat
+    fault_pressure = ereg.fault_pressure
+    relay_timeout = ereg.relay_timeout
+    calibration_pressure = ereg.calibration_pressure
+    print(f'{samples_taken = }')
+    print(f'{sample_rate = }')
+    print(f'{heartbeat = }')
+    print(f'{fault_pressure = }')
+    print(f'{relay_timeout = }')
+    print(f'{calibration_pressure = }')
+
+    # pressure setting
+    pressure_command = ereg.pressure
+    print(f'{pressure_command = }')
