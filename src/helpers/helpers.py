@@ -24,15 +24,16 @@ def get_root_dir() -> Path:
         return Path(__file__).resolve().parents[1]
 
 
-def get_ini_filepath() -> Path:
+def _get_ini_filepath() -> Path:
     root_dir = get_root_dir()
     ini_filepath = Path(root_dir / 'configuration' / 'config.ini')
     return ini_filepath
 
 
-def load_ini(ini_file: Path) -> ConfigParser:
+def load_ini() -> ConfigParser:
     config_data = ConfigParser()
-    config_data.read(str(ini_file))
+    ini_filepath: Path = _get_ini_filepath()
+    config_data.read(str(ini_filepath))
     return config_data
 
 
@@ -42,6 +43,6 @@ def find_selection(config_data: ConfigParser, header: str, selection: str) -> st
 
 if __name__ == '__main__':
     # How to get the data in the ini file
-    ini_filepath = get_ini_filepath()
-    config_data = load_ini(ini_filepath)
+    config_data = load_ini()
     IPAddress = find_selection(config_data, 'IPAddress', 'IPAddress')
+    print(IPAddress)

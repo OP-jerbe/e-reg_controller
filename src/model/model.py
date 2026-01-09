@@ -3,6 +3,8 @@ from socket import SocketType
 from threading import Lock
 from typing import Optional
 
+import src.helpers.helpers as h
+
 ERROR_RESPONSES = {
     'bcr': 'bad command response',
     'bdr': 'bad data response',
@@ -12,7 +14,6 @@ ERROR_RESPONSES = {
 
 
 class Model:
-    DEFAULT_IP: str = '169.254.70.5'
     DEFAULT_PORT: int = 10001
     DEFAULT_TIMEOUT: float = 5.0
 
@@ -20,6 +21,15 @@ class Model:
         self._lock = Lock()
         self._sock: Optional[SocketType] = None
         self._term_char = '\n'
+        self.defalut_ip_address = self._get_IP_address()
+
+    # --- Connections Methods ---
+
+    @staticmethod
+    def _get_IP_address() -> str:
+        config_data = h.load_ini()
+        ip = h.find_selection(config_data, 'IPAddress', 'IPAddress')
+        return ip
 
     def _send_query(self, query: str) -> str:
         """
@@ -58,7 +68,7 @@ class Model:
 
     def open_connection(
         self,
-        ip: str = DEFAULT_IP,
+        ip: str | None = None,
         port: int = DEFAULT_PORT,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> SocketType | None:
@@ -74,6 +84,8 @@ class Model:
             SocketType | None: The active socket object if the connection is successful,
                 or None if a connection error occurred.
         """
+        if not ip:
+            ip = self.defalut_ip_address
         try:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._sock.settimeout(timeout)
