@@ -22,7 +22,6 @@ class Model:
         self._sock: Optional[SocketType] = None
         self._term_char = '\n'
         self.defalut_ip_address = self._get_IP_address()
-        self.calibrated_pressure = self._get_calibrated_pressure()
 
     @staticmethod
     def _get_IP_address() -> str:
@@ -145,9 +144,9 @@ class Model:
         if not isinstance(value, int):
             raise ValueError(f'Received {type(value).__name__} but expected int.')
 
-        if not 0 <= value <= self.calibrated_pressure:
+        if not 0 <= value <= float(self.calibration_pressure):
             raise ValueError(
-                f'Invalid fault pressure value. Must be between 0 and {self.calibrated_pressure}.'
+                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
             )
 
         command = f'sfpc:{value}'
@@ -190,6 +189,22 @@ class Model:
         return self._send_query(command).replace('rdr:', '').strip()
 
     @property
+    def samples_taken(self) -> str:
+        """
+        GETTER: Reads the number of samples taken from the ***defaults*** string.
+        """
+        defaults: list = self.defaults.split(',')
+        return defaults[0]
+
+    @property
+    def calibration_pressure(self) -> str:
+        """
+        GETTER: Reads the calibration pressure from the ***defaults*** string.
+        """
+        defaults = self.defaults.split(',')
+        return defaults[-1]
+
+    @property
     def pressure(self) -> str:
         """
         GETTER: Reads the current output pressure value.
@@ -209,9 +224,9 @@ class Model:
         if not isinstance(value, int):
             raise ValueError(f'Received {type(value).__name__} but expected int.')
 
-        if not 0 <= value <= self.calibrated_pressure:
+        if not 0 <= value <= float(self.calibration_pressure):
             raise ValueError(
-                f'Invalid fault pressure value. Must be between 0 and {self.calibrated_pressure}.'
+                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
             )
 
         command = f'spc:{value}'
@@ -245,19 +260,142 @@ class Model:
     @property
     def sample_rate(self) -> str:
         """
-        GETTER: Reads the current default sample rate in milliseconds/sample.
+        GETTER: Reads the current default time between samples in milliseconds.
         """
         command = 'rsrc'
         return self._send_query(command).replace('rsrr:', '').strip()
 
+    @sample_rate.setter
+    def sample_rate(self, value: int) -> None:
+        """
+        SETTER: Sets the default time between samples in milliseconds.
+
+        Args:
+            value (int): The sample rate in milliseconds.
+        """
+        if not isinstance(value, int):
+            raise ValueError(f'Received {type(value).__name__} but expected int.')
+
+        if not 1 <= value <= 200:
+            raise ValueError('Invalid sample rate. Must be between 1 and 200.')
+
+        command = f'ssrc:{value}'
+        self._send_query(command)
+
+    @property
+    def metadata(self) -> str:
+        """
+        GETTER: Reads the metadata from the device in the form
+            [serialNumber], [softwareVersion], [pcBoardRev]
+        """
+        command = 'stc'
+        return self._send_query(command).replace('str:', '').strip()
+
+    @property
+    def serial_number(self) -> str:
+        """
+        GETTER: Reads the serial number from the metadata.
+        """
+        metadata = self.metadata.split(', ')
+        return metadata[0]
+
+    @property
+    def software_ver(self) -> str:
+        """
+        GETTER: Reads the software version from the metadata.
+        """
+        metadata = self.metadata.split(', ')
+        return metadata[1]
+
+    @property
+    def pc_board_rev(self) -> str:
+        """
+        GETTER: Reads the PC board rev from the metadata.
+        """
+        metadata = self.metadata.split(', ')
+        return metadata[-1]
+
     def send_buffer(self) -> str:
         """
-        GETTER: Reads the sample buffer in a space delimited format where vvv.vv is a value.
+        Reads the sample buffer in a space delimited format where vvv.vv is a value.
             Will return a *send buffer error "sbe"* response if a send buffer request
             is sent to the device before the buffer is full.
         """
         command = 'sbc'
         return self._send_query(command).replace('sbr:', '')
+
+    def start_sampling(self, number: int | None = None) -> None:
+        """
+        Begin taking a number of samples. If number == None, then sampling will begin
+        filling the sampling buffer up to the number set by the ***sszc*** command.
+
+        Args:
+            number (int): The number of samples to take. Must be between 1 and 10000
+        """
+        if number is None:
+            command = 'ssc'
+            self._send_query(command)
+            return
+
+        if not isinstance(number, int):
+            raise ValueError(f'Received {type(number).__name__} but expected int.')
+
+        if not 1 <= number <= 10000:
+            raise ValueError('Invalid sampling number. Must be between 1 and 10000.')
+
+        command = f'ssc:{number}'
+        self._send_query(command)
+
+    def set_sample_size(self, number: int) -> None:
+        """
+        Sets the number of samples to be stored in the sample buffer.
+
+        Args:
+            number (int): The number of samples to be stored in the sample buffer.
+        """
+        if not isinstance(number, int):
+            raise ValueError(f'Received {type(number).__name__} but expected int.')
+
+        if not 1 <= number <= 10000:
+            raise ValueError('Invalid sampling number. Must be between 1 and 10000.')
+
+        command = f'sszc:{number}'
+        self._send_query(command)
+
+    def test_cont_A(self) -> None:
+        """
+        Test contact A: close A, open B.
+        """
+        command = 'tac'
+        self._send_query(command)
+
+    def test_cont_B(self) -> None:
+        """
+        Test contact B: close B, open A.
+        """
+        command = 'tbc'
+        self._send_query(command)
+
+    def test_cont_norm(self) -> None:
+        """
+        Both contacts are returned to the closed position.
+        """
+        command = 'tnc'
+        self._send_query(command)
+
+    def valves_off(self) -> None:
+        """
+        Disables both pressure control solenoids.
+        """
+        command = 'vfc'
+        self._send_query(command)
+
+    def valves_on(self) -> None:
+        """
+        Enables both pressure control solenoids.
+        """
+        command = 'voc'
+        self._send_query(command)
 
 
 class NegativeAcknowledgementError(Exception):
@@ -276,7 +414,11 @@ if __name__ == '__main__':
     pressure_command = ereg.pressure
     relay_timeout_command = ereg.relay_timeout
     sample_rate = ereg.sample_rate
-    buffer = ereg.send_buffer()
+    calibration_pressure = ereg.calibration_pressure
+    metadata = ereg.metadata
+    serial_number = ereg.serial_number
+    software_ver = ereg.software_ver
+    pc_board_rev = ereg.pc_board_rev
     print(f'{model_num = }')
     print(f'{fault_pressure = }')
     print(f'{heartbeat = }')
@@ -284,8 +426,8 @@ if __name__ == '__main__':
     print(f'{pressure_command = }')
     print(f'{relay_timeout_command = }')
     print(f'{sample_rate = }')
-    print(f'{buffer = }')
-
-    # setters
-    ereg.heartbeat = 20
-    print(f'{ereg.heartbeat = }')
+    print(f'{calibration_pressure = }')
+    print(f'{metadata = }')
+    print(f'{serial_number = }')
+    print(f'{software_ver = }')
+    print(f'{pc_board_rev = }')
