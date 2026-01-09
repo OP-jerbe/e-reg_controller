@@ -12,7 +12,7 @@ ERROR_RESPONSES = {
 
 
 class Model:
-    DEFAULT_IP: str = '169.254.10.212'
+    DEFAULT_IP: str = '169.254.70.5'
     DEFAULT_PORT: int = 10001
     DEFAULT_TIMEOUT: float = 5.0
 
