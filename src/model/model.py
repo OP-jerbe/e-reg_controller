@@ -80,7 +80,7 @@ class eReg:
         Establishes a TCP connection to the instrument at the specified IP address and port.
 
         Args:
-            ip (str): The IP address of the instrument. Defaults to `DEFAULT_IP`.
+            ip (str): The IP address of the instrument.
             port (int): The port number to connect to. Defaults to `DEFAULT_PORT`.
             timeout (float): The connection timeout in seconds. Defaults to `DEFAULT_TIMEOUT`.
 
