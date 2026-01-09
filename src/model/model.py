@@ -29,14 +29,6 @@ class Model:
         ip = h.find_selection(config_data, 'IPAddress', 'IPAddress')
         return ip
 
-    @staticmethod
-    def _get_calibrated_pressure() -> int:
-        config_data = h.load_ini()
-        calibrated_pressure = h.find_selection(
-            config_data, 'CalibratePressure', 'Pressure'
-        )
-        return int(calibrated_pressure)
-
     # --- Connections Methods ---
 
     def _send_query(self, query: str) -> str:
