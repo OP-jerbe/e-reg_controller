@@ -4,7 +4,7 @@ from typing import NoReturn
 from PySide6.QtWidgets import QApplication
 
 from src.controller.controller import Controller
-from src.model.model import eReg
+from src.model.ereg_driver import eReg
 from src.view.main_window import MainWindow
 
 

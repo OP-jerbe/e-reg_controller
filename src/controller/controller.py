@@ -1,4 +1,4 @@
-from src.model.model import eReg
+from src.model.ereg_driver import eReg
 from src.view.main_window import MainWindow
 
 

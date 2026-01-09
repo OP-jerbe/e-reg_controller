@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QMainWindow
 from qt_material import apply_stylesheet
 
 import src.helpers.helpers as h
-from src.model.model import eReg
+from src.model.ereg_driver import eReg
 
 
 class MainWindow(QMainWindow):
