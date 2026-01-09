@@ -20,7 +20,7 @@ class eReg:
     def __init__(self) -> None:
         self._lock = Lock()
         self._sock: Optional[SocketType] = None
-        self.default_ip_address = self._get_IP_address()
+        self.default_ip_address: str = self._get_IP_address()
 
         try:
             self.open_connection(ip=self.default_ip_address)
