@@ -372,27 +372,6 @@ class eReg:
         command = f'sszc:{number}'
         self._send_query(command)
 
-    def test_contact_A(self) -> None:
-        """
-        Test contact A: close A, open B.
-        """
-        command = 'tac'
-        self._send_query(command)
-
-    def test_contact_B(self) -> None:
-        """
-        Test contact B: close B, open A.
-        """
-        command = 'tbc'
-        self._send_query(command)
-
-    def test_contact_norm(self) -> None:
-        """
-        Both contacts are returned to the closed position.
-        """
-        command = 'tnc'
-        self._send_query(command)
-
     def valves_off(self) -> None:
         """
         Disables both pressure control solenoids.
