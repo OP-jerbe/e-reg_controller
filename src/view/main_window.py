@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtWidgets import QLabel, QLineEdit, QMainWindow
 from qt_material import apply_stylesheet
 
 import src.helpers.helpers as h
@@ -24,3 +24,6 @@ class MainWindow(QMainWindow):
             self.styleSheet() + """QLineEdit, QTextEdit {color: lightgreen;}"""
         )
         self.resize(600, 600)
+
+        pressure_setting_label = QLabel('Pressure Setting')
+        pressure_setting_le = QLineEdit()
