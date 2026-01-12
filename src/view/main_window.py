@@ -1,6 +1,3 @@
-from pathlib import Path
-
-from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QLabel, QLineEdit, QMainWindow
 from qt_material import apply_stylesheet
 
