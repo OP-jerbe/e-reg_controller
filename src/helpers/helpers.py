@@ -3,12 +3,20 @@ from configparser import ConfigParser
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
+from PySide6.QtGui import QIcon
+
 
 def get_app_version() -> str:
     try:
         return version('e_reg_controller')
     except PackageNotFoundError:
         return 'development-build'
+
+
+def get_icon() -> QIcon:
+    root_dir: Path = get_root_dir()
+    icon_path: str = str(root_dir / 'assets' / 'icon.ico')
+    return QIcon(icon_path)
 
 
 def get_root_dir() -> Path:

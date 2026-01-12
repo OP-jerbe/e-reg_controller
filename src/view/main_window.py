@@ -16,10 +16,9 @@ class MainWindow(QMainWindow):
 
     def create_gui(self) -> None:
         ver = h.get_app_version()
-        root_dir: Path = h.get_root_dir()
-        icon_path: str = str(root_dir / 'assets' / 'icon.ico')
-        self.setWindowIcon(QIcon(icon_path))
         self.setWindowTitle(f'e-Reg Controller v{ver}')
+        icon = h.get_icon()
+        self.setWindowIcon(icon)
         apply_stylesheet(self, theme='dark_lightgreen.xml', invert_secondary=True)
         self.setStyleSheet(
             self.styleSheet() + """QLineEdit, QTextEdit {color: lightgreen;}"""
