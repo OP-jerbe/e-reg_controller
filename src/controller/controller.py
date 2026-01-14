@@ -15,14 +15,14 @@ class Controller(QObject):
 
         self.worker_thread = QThread()
 
+        self.timer = QTimer(interval=250)
+        self.timer.timeout.connect(self.receive_timeout_sig)
+
         self.worker = Worker(self.ereg)
         self.worker.result_sig.connect(self.receive_result_sig)
         self.worker.conn_error_sig.connect(self.receive_conn_error_sig)
         self.worker.unexpected_error_sig.connect(self.receive_unexpected_error)
         self.worker.moveToThread(self.worker_thread)
-
-        self.timer = QTimer(interval=250)
-        self.timer.timeout.connect(self.receive_timeout_sig)
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.new_address_sig.connect(self.receive_new_address_sig)
