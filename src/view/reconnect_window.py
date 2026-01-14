@@ -20,7 +20,6 @@ class ReconnectWindow(QMainWindow):
         self, parent: QWidget, ip: str, port: int, sock: SocketType | None
     ) -> None:
         super().__init__(parent)
-        # self.setWindowFlags(Qt.WindowType.Dialog)
         self.ip = ip
         self.port = str(port)
         self.sock = sock
