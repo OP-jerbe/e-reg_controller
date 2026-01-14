@@ -1,35 +1,44 @@
-import traceback
+# import traceback
+import statistics as stats
 
-from PySide6.QtCore import QObject, QRunnable, Signal, Slot
+from PySide6.QtCore import QObject, Signal
 
-
-class WorkerSignals(QObject):
-    # This survives even after the Worker is deleted
-    finished = Signal(bool)
-    error = Signal(str, str)
-    rtn = Signal(object)
+from src.model.ereg_driver import eReg
 
 
-class Worker(QRunnable):
-    def __init__(self, fn, rtn=False, *args, **kwargs) -> None:
+class Worker(QObject):
+    result_sig = Signal(float)
+    conn_error_sig = Signal(str)
+    unexpected_error_sig = Signal(str)
+
+    def __init__(self, model: eReg) -> None:
         super().__init__()
-        self.fn = fn
-        self.rtn = rtn
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()  # Create the signaler
+        self.ereg = model
+        self.working: bool = False
 
-    @Slot()
-    def run(self) -> None:
-        complete = False
-        obj = None
+    def doWork(self) -> None:
+        if not self.working:
+            self.working = True
+            self.ereg.sample_rate = 10
+            self.ereg.start_sampling(21)
         try:
-            obj = self.fn(*self.args, **self.kwargs)
-            complete = True
+            response: str = self.ereg.send_buffer()
+            print(f'{response = }')
+            if response == 'sbe':  # send buffer error
+                return
+
+            if response == 'scr':  # sample complete response
+                return
+
+            buffer_contents: list[str] = response.split()
+            if not buffer_contents:
+                return
+
+            values: list[float] = [float(value) for value in buffer_contents]
+            result: float = float(stats.median(values))
+            self.working = False
+            self.result_sig.emit(result)
+        except ConnectionError as e:
+            self.conn_error_sig.emit(str(e))
         except Exception as e:
-            tb = traceback.format_exc()
-            self.signals.error.emit(str(e), tb)
-        finally:
-            self.signals.finished.emit(complete)
-            if self.rtn and complete:
-                self.signals.rtn.emit(obj)
+            self.unexpected_error_sig.emit(str(e))
