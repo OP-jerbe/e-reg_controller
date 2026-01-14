@@ -22,7 +22,7 @@ class Controller(QObject):
         self.worker.moveToThread(self.worker_thread)
 
         self.timer = QTimer(interval=250)
-        self.timer.timeout.connect(self.receive_timer_timeout_sig)
+        self.timer.timeout.connect(self.receive_timeout_sig)
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.new_address_sig.connect(self.receive_new_address_sig)
@@ -30,28 +30,17 @@ class Controller(QObject):
         if self.ereg.sock:
             self.timer.start()
 
-    @Slot()
-    def receive_new_address_sig(self, ip: str, port: int) -> None:
-        """
-        Signal received from the `MainWindow` class.\n
-        Tries to open a socket connection to the e-reg with `ip` and `port`.
-        If successful, `self.timer` is started to begin reading data.
-        """
-        sock = self.ereg.open_connection(ip, port)
-        if not sock:
-            error = f'Could not connect to {ip}:{port}'
-            self.mw.error_popup(error)
-            return
-        self.ereg.ip_address = ip
-        self.timer.start()
+    # --- Controller Slots ---
 
     @Slot()
-    def receive_timer_timeout_sig(self) -> None:
+    def receive_timeout_sig(self) -> None:
         """
         Signal received from `self.timer`\n
         Tells the `Worker` class to execute the `doWork()` method.
         """
         self.worker.doWork()
+
+    # --- Worker Slots ---
 
     @Slot()
     def receive_result_sig(self, result: float) -> None:
@@ -78,6 +67,23 @@ class Controller(QObject):
         """
         self.timer.stop()
         self.mw.error_popup(error)
+
+    # --- MainWindow Slots ---
+
+    @Slot()
+    def receive_new_address_sig(self, ip: str, port: int) -> None:
+        """
+        Signal received from the `MainWindow` class.\n
+        Tries to open a socket connection to the e-reg with `ip` and `port`.
+        If successful, `self.timer` is started to begin reading data.
+        """
+        sock = self.ereg.open_connection(ip, port)
+        if not sock:
+            error = f'Could not connect to {ip}:{port}'
+            self.mw.error_popup(error)
+            return
+        self.ereg.ip_address = ip
+        self.timer.start()
 
     @Slot()
     def receive_closing_sig(self) -> None:
