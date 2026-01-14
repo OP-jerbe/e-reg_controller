@@ -7,7 +7,7 @@ name = "e_reg_controller"
 version = "1.0.0"
 description = "A GUI for controlling the ProportionAir electronic gas regulator"
 authors = [{ name = "Joshua Erbe", email = "j.erbe@oregon-physics.com" }]
-dependencies = ["pyside6 ~= 6.9.0", "qt-material == 2.14", "numpy ~= 2.4.0"]
+dependencies = ["pyside6 ~= 6.9.0", "qt-material == 2.14"]
 
 [tool.setuptools.packages.find]
 where = ["."]
