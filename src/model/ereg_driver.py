@@ -15,11 +15,11 @@ ERROR_RESPONSES = {
 
 class eReg:
     DEFAULT_PORT: int = 10001
-    DEFAULT_TIMEOUT: float = 5.0
+    DEFAULT_TIMEOUT: float = 1.0
 
     def __init__(self) -> None:
         self._lock = Lock()
-        self._sock: Optional[SocketType] = None
+        self.sock: Optional[SocketType] = None
         self.default_ip_address: str = self._get_IP_address()
 
         try:
@@ -38,7 +38,7 @@ class eReg:
         Returns:
             str: The decoded and stripped string response from the instrument.
         """
-        if not self._sock:
+        if not self.sock:
             raise ConnectionError('Socket is not connected')
         # print(f'Command: {query}')
         if not query.endswith(term_char):
@@ -46,8 +46,8 @@ class eReg:
 
         with self._lock:
             try:
-                self._sock.sendall(query.encode())
-                response = self._sock.recv(1024)
+                self.sock.sendall(query.encode())
+                response = self.sock.recv(1024)
                 # print(f'Raw response: "{response.decode()}"')
             except socket.error as e:
                 raise ConnectionError(f'Socket communication error {str(e)}')
@@ -91,24 +91,24 @@ class eReg:
         if not ip:
             ip = self.default_ip_address
         try:
-            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.settimeout(timeout)
-            self._sock.connect((ip, port))
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(timeout)
+            self.sock.connect((ip, port))
             print(f'Socket open at {ip}:{port}')
-            return self._sock
+            return self.sock
         except socket.error as e:
             print(f'Connection error\n\n{str(e)}')
-            self._sock = None
-            return self._sock
+            self.sock = None
+            return self.sock
 
     def close_connection(self) -> None:
         """
         Closes the underlying TCP socket connection to the instrument if one is currently open.
         """
-        if self._sock:
-            self._sock.close()
+        if self.sock:
+            self.sock.close()
             print('Socket closed')
-            self._sock = None
+            self.sock = None
 
     # --- Metadata ---
 
