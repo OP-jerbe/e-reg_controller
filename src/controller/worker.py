@@ -1,4 +1,3 @@
-# import traceback
 import statistics as stats
 
 from PySide6.QtCore import QObject, Signal
@@ -19,8 +18,17 @@ class Worker(QObject):
     def doWork(self) -> None:
         if not self.working:
             self.working = True
-            self.ereg.sample_rate = 10
-            self.ereg.start_sampling(21)
+            try:
+                self.ereg.sample_rate = 10
+                self.ereg.start_sampling(21)
+            except ConnectionError as e:
+                self.working = False
+                self.conn_error_sig.emit(str(e))
+                return
+            except Exception as e:
+                self.working = False
+                self.unexpected_error_sig.emit(str(e))
+                return
         try:
             response: str = self.ereg.send_buffer()
             print(f'{response = }')
@@ -39,6 +47,8 @@ class Worker(QObject):
             self.working = False
             self.result_sig.emit(result)
         except ConnectionError as e:
+            self.working = False
             self.conn_error_sig.emit(str(e))
         except Exception as e:
+            self.working = False
             self.unexpected_error_sig.emit(str(e))
