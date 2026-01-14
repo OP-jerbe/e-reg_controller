@@ -23,8 +23,8 @@ def get_root_dir() -> Path:
     """
     Get the root directory of the __main__ file.
 
-    Returns [str]:
-        Path object
+    Returns:
+        Path: The path to the root directory.
     """
     if getattr(sys, 'frozen', False):  # Check if running from the PyInstaller EXE
         return Path(getattr(sys, '_MEIPASS', '.'))
@@ -47,6 +47,19 @@ def load_ini() -> ConfigParser:
 
 def find_selection(config_data: ConfigParser, header: str, selection: str) -> str:
     return config_data.get(header, f'{selection}')
+
+
+def convert_psi_to_mbar(pressure: float) -> float:
+    """
+    Converts a pressure reading from PSI to mBar.
+
+    Args:
+        pressure (float): The pressure value in PSI.
+
+    Returns:
+        float: The pressure value in mBar.
+    """
+    return pressure * 68.9476
 
 
 if __name__ == '__main__':
