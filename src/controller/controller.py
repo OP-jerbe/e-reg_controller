@@ -60,6 +60,7 @@ class Controller(QObject):
         Stops the timer and shows an popup error message if a communication error occurs.
         """
         self.timer.stop()
+        self.mw.pressure_reading_label.setText('- - - - mBar')
         self.mw.error_popup(error)
 
     @Slot()
@@ -70,6 +71,7 @@ class Controller(QObject):
         Stops the timer and shows an popup error message if an unexpected error occurs.
         """
         self.timer.stop()
+        self.mw.pressure_reading_label.setText('---- mBar')
         self.mw.error_popup(error)
 
     # --- MainWindow Slots ---

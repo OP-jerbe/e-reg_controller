@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
         self._create_menubar()
 
         pressure_setting_label = QLabel('Pressure Setting')
-        self.pressure_reading_label = QLabel()
+        self.pressure_reading_label = QLabel('- - - - mBar')
         self.pressure_setting_le = QLineEdit()
 
         # --- Create the layout ---
