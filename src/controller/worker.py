@@ -16,6 +16,29 @@ class Worker(QObject):
         self.working: bool = False
 
     def doWork(self) -> None:
+        """
+        Executes the sampling cycle and processes the hardware buffer.
+
+        This method initiates sampling on the eReg device if a cycle is not already
+        in progress. It retrieves the data buffer, calculates the median value
+        from the results, and emits the processed data via signals.
+
+        The method handles state management using the `self.working` flag to
+        prevent overlapping execution cycles.
+
+        Signals Emitted:
+            result_sig (float): Emitted with the calculated median of the
+                buffer contents upon successful completion.
+            conn_error_sig (str): Emitted if a ConnectionError occurs during
+                sampling or data retrieval.
+            unexpected_error_sig (str): Emitted if any other exception occurs
+                during execution.
+
+        Note:
+            If the hardware returns 'sbe' (send buffer error) or 'scr'
+            (sample complete response), the method returns early without
+            emitting a result signal.
+        """
         if not self.working:
             self.working = True
             try:
