@@ -35,7 +35,8 @@ class Controller(QObject):
     @Slot()
     def receive_timeout_sig(self) -> None:
         """
-        Signal received from `self.timer`\n
+        Signal received from `self.timer`
+
         Tells the `Worker` class to execute the `doWork()` method.
         """
         self.worker.doWork()
@@ -45,7 +46,8 @@ class Controller(QObject):
     @Slot()
     def receive_result_sig(self, result: float) -> None:
         """
-        Signal received from the `Worker` class.\n
+        Signal received from the `Worker` class.
+
         Updates the UI with the pressure reading result.
         """
         self.mw.update_pressure_reading(result)
@@ -53,7 +55,8 @@ class Controller(QObject):
     @Slot()
     def receive_conn_error_sig(self, error: str) -> None:
         """
-        Signal received from the `Worker` class.\n
+        Signal received from the `Worker` class.
+
         Stops the timer and shows an popup error message if a communication error occurs.
         """
         self.timer.stop()
@@ -62,7 +65,8 @@ class Controller(QObject):
     @Slot()
     def receive_unexpected_error(self, error: str) -> None:
         """
-        Signal received from the `Worker` class.\n
+        Signal received from the `Worker` class.
+
         Stops the timer and shows an popup error message if an unexpected error occurs.
         """
         self.timer.stop()
@@ -73,7 +77,8 @@ class Controller(QObject):
     @Slot()
     def receive_new_address_sig(self, ip: str, port: int) -> None:
         """
-        Signal received from the `MainWindow` class.\n
+        Signal received from the `MainWindow` class.
+
         Tries to open a socket connection to the e-reg with `ip` and `port`.
         If successful, `self.timer` is started to begin reading data.
         """
@@ -88,7 +93,8 @@ class Controller(QObject):
     @Slot()
     def receive_closing_sig(self) -> None:
         """
-        Signal received from the `MainWindow` class.\n
+        Signal received from the `MainWindow` class.
+
         Stops the timer and kills the background thread when the main window is closed.
         """
         self.timer.stop()
