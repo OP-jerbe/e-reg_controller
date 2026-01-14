@@ -15,15 +15,15 @@ ERROR_RESPONSES = {
 
 class eReg:
     DEFAULT_PORT: int = 10001
-    DEFAULT_TIMEOUT: float = 1.0
+    DEFAULT_TIMEOUT: float = 5.0
 
     def __init__(self) -> None:
         self._lock = Lock()
         self.sock: Optional[SocketType] = None
-        self.default_ip_address: str = self._get_IP_address()
+        self.ip_address: str = self._get_IP_address()
 
         try:
-            self.open_connection(ip=self.default_ip_address)
+            self.open_connection()
         except:
             pass
 
@@ -50,7 +50,8 @@ class eReg:
                 response = self.sock.recv(1024)
                 # print(f'Raw response: "{response.decode()}"')
             except socket.error as e:
-                raise ConnectionError(f'Socket communication error {str(e)}')
+                self.sock = None
+                raise ConnectionError(str(e))
 
         response_str = response.decode().strip()
 
@@ -89,7 +90,7 @@ class eReg:
                 or None if a connection error occurred.
         """
         if not ip:
-            ip = self.default_ip_address
+            ip = self.ip_address
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(timeout)
