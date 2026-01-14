@@ -10,10 +10,10 @@ from src.view.main_window import MainWindow
 
 def run_app() -> NoReturn:
     app = QApplication([])
-    model = eReg()
-    view = MainWindow(model)
-    _ = Controller(model, view)
-    view.show()
+    ereg = eReg()
+    mw = MainWindow(ereg)
+    _ = Controller(ereg, mw)
+    mw.show()
     sys.exit(app.exec())
 
 
