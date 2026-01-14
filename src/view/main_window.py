@@ -2,6 +2,7 @@ from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QAction, QCloseEvent
 from PySide6.QtWidgets import (
     QErrorMessage,
+    QFormLayout,
     QFrame,
     QLabel,
     QLineEdit,
@@ -34,13 +35,14 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(
             self.styleSheet() + """QLineEdit, QTextEdit {color: lightgreen;}"""
         )
-        self.resize(300, 150)
+        self.resize(300, 100)
 
         self._create_menubar()
 
-        pressure_setting_label = QLabel('Pressure Setting')
+        self.pressure_label = QLabel('Pressure:')
         self.pressure_reading_label = QLabel('- - - - mBar')
-        self.pressure_setting_le = QLineEdit()
+        self.pressure_setting_label = QLabel('Setting:')
+        self.pressure_setting_entry = QLineEdit()
 
         # --- Create the layout ---
         central_widget = QWidget()
@@ -52,10 +54,9 @@ class MainWindow(QMainWindow):
         self.container_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.container_frame.setLineWidth(2)
 
-        frame_layout = QVBoxLayout(self.container_frame)
-        frame_layout.addWidget(pressure_setting_label)
-        frame_layout.addWidget(self.pressure_reading_label)
-        frame_layout.addWidget(self.pressure_setting_le)
+        frame_layout = QFormLayout(self.container_frame)
+        frame_layout.addRow(self.pressure_label, self.pressure_reading_label)
+        frame_layout.addRow(self.pressure_setting_label, self.pressure_setting_entry)
 
         main_layout.addWidget(self.container_frame)
 
