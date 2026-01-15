@@ -138,10 +138,18 @@ def convert_psi_to_mbar(pressure: float) -> float:
 
     if not isinstance(pressure, int | float):
         raise ValueError(
-            f'Expected int or float but received {type(pressure).__name__}.'
+            f'Received {type(pressure).__name__} but expected int or float.'
         )
 
     return pressure * 68.9476
+
+
+def convert_mbar_to_psi(pressure: float) -> float:
+    if not isinstance(pressure, int | float):
+        raise ValueError(
+            f'Received {type(pressure).__name__} but expected int or float.'
+        )
+    return pressure * 1.45038e-2
 
 
 if __name__ == '__main__':
