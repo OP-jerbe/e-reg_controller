@@ -196,7 +196,9 @@ class eReg:
             raise ValueError(f'Received {type(value).__name__} but expected int.')
 
         if not 1 <= value <= 200:
-            raise ValueError('Invalid sample rate. Must be between 1 and 200.')
+            raise ValueError(
+                f'Invalid sample rate: {value}. Must be between 1 and 200.'
+            )
 
         command = f'ssrc:{value}'
         self._send_query(command)
@@ -222,7 +224,7 @@ class eReg:
 
         if not 50 <= value <= 65000 or value != 0:
             raise ValueError(
-                'Invalid heartbeat value. Must be `0` to disable or set between `50-65000`.'
+                f'Invalid heartbeat value: {value}. Must be `0` to disable or set between `50-65000`.'
             )
             return
         command = f'shbc:{value}'
@@ -250,7 +252,7 @@ class eReg:
 
         if not 0 <= value <= float(self.calibration_pressure):
             raise ValueError(
-                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
+                f'Invalid fault pressure value: {value}. Must be between 0 and {self.cal_pressure}.'
             )
 
         command = f'sfpc:{value}'
@@ -276,7 +278,9 @@ class eReg:
             raise ValueError(f'Received {type(value).__name__} but expected int.')
 
         if not 0 <= value <= 65000:
-            raise ValueError('Invalid relay timeout value. Must be between 0 and 65000')
+            raise ValueError(
+                f'Invalid relay timeout value: {value}. Must be between 0 and 65000'
+            )
 
         command = f'srtc:{value}'
         self._send_query(command)
@@ -321,7 +325,7 @@ class eReg:
 
         if not 0 <= value <= float(self.calibration_pressure):
             raise ValueError(
-                f'Invalid fault pressure value. Must be between 0 and {self.calibration_pressure}.'
+                f'Invalid fault pressure value: {value}. Must be between 0 and {self.cal_pressure}.'
             )
 
         command = f'spc:{value}'
