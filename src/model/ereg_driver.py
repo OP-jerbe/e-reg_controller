@@ -325,7 +325,7 @@ class eReg:
 
         if not 0 <= value <= float(self.calibration_pressure):
             raise ValueError(
-                f'Invalid fault pressure value: {value}. Must be between 0 and {self.cal_pressure}.'
+                f'Invalid pressure setting value: {value}. Must be between 0 and {self.cal_pressure}.'
             )
 
         command = f'spc:{value}'
