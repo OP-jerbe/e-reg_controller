@@ -81,9 +81,19 @@ class Controller(QObject):
     @Slot()
     def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:
         """
-        Signal received from the `MainWindow` class.
+        Validates and applies a new pressure setpoint to the hardware.
 
-        Sends the new pressure setting to the e-regulator.
+        Receives the current and previous pressure strings from the UI. If the
+        new input is empty or falls outside the safety range (0-3033 mBar),
+        the UI is reverted to the old value and an error popup is displayed
+        where applicable.
+
+        If valid, the value is converted from mBar to PSI, rounded to two
+        decimal places, and sent to the e-regulator hardware.
+
+        Args:
+            new_pressure (str): The target pressure value entered by the user.
+            old_pressure (str): The last successfully applied pressure value.
         """
         if not new_pressure:
             self.mw.pressure_setting_entry.setText(old_pressure)
