@@ -113,28 +113,18 @@ class MainWindow(QMainWindow):
 
     def handle_pressure_input(self) -> None:
         """
-        Validates and processes the user input for the pressure setting.
+        Triggers the pressure change workflow when user input is finished.
 
-        This method is triggered when the pressure entry field loses focus or
-        the Enter key is pressed. It ensures the input consists only of
-        numeric digits.
+        Captures the text from the pressure setting entry, identifies the
+        previously stored valid pressure, and updates the local state.
+        Emits 'pressure_change_sig' to notify the Controller that a
+        validation and hardware update is requested.
 
-        If the input is invalid or empty, the field is reverted to the
-        last successfully processed value. If valid, the new value is
-        cached, emitted via 'new_pressure_sig', and the widget focus is cleared.
-
-        Signals Emitted:
-            new_pressure_sig (str): Emitted with the validated pressure
-                string if the input is numeric.
+        This method is intended to be connected to the `editingFinished`
+        signal of the QLineEdit.
         """
         old_pressure = self.last_valid_pressure
         new_pressure = self.pressure_setting_entry.text().strip()
-
-        if not new_pressure:
-            # If blank, repopulate with the last known valid text
-            self.pressure_setting_entry.setText(self.last_valid_pressure)
-            return
-
         self.last_valid_pressure = new_pressure
         self.pressure_change_sig.emit(new_pressure, old_pressure)
         self.pressure_setting_entry.clearFocus()
