@@ -20,7 +20,7 @@ from src.view.reconnect_window import ReconnectWindow
 class MainWindow(QMainWindow):
     closing_sig = Signal()
     new_address_sig = Signal(str, int)
-    new_pressure_sig = Signal(str)
+    pressure_change_sig = Signal(str, str)
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -127,15 +127,16 @@ class MainWindow(QMainWindow):
             new_pressure_sig (str): Emitted with the validated pressure
                 string if the input is numeric.
         """
-        current_text = self.pressure_setting_entry.text().strip()
+        old_pressure = self.last_valid_pressure
+        new_pressure = self.pressure_setting_entry.text().strip()
 
-        if not current_text:
+        if not new_pressure:
             # If blank, repopulate with the last known valid text
             self.pressure_setting_entry.setText(self.last_valid_pressure)
             return
 
-        self.last_valid_pressure = current_text
-        self.new_pressure_sig.emit(current_text)
+        self.last_valid_pressure = new_pressure
+        self.pressure_change_sig.emit(new_pressure, old_pressure)
         self.pressure_setting_entry.clearFocus()
 
     # --- Menu Option Handlers ---

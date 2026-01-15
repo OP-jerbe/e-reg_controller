@@ -27,7 +27,7 @@ class Controller(QObject):
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.new_address_sig.connect(self.receive_new_address_sig)
-        self.mw.new_pressure_sig.connect(self.receive_new_pressure_sig)
+        self.mw.pressure_change_sig.connect(self.receive_pressure_change_sig)
 
         if self.ereg.sock:
             self.timer.start()
@@ -79,13 +79,24 @@ class Controller(QObject):
     # --- MainWindow Slots ---
 
     @Slot()
-    def receive_new_pressure_sig(self, pressure: str) -> None:
+    def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:
         """
         Signal received from the `MainWindow` class.
 
         Sends the new pressure setting to the e-regulator.
         """
-        p = float(pressure)
+        if not new_pressure:
+            self.mw.pressure_setting_entry.setText(old_pressure)
+            return
+
+        p = int(new_pressure)
+        if not 0 <= p <= 3033:
+            self.mw.pressure_setting_entry.setText(old_pressure)
+            error_msg = (
+                f'Invalid Pressure: {p} mBar. Please enter a value between 0 and 3033.'
+            )
+            self.mw.error_popup(error_msg)
+            return
         p = round(h.convert_mbar_to_psi(p), 2)
         self.ereg.pressure = p
 
