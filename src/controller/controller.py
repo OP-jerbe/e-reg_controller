@@ -1,5 +1,6 @@
 from PySide6.QtCore import QObject, QThread, QTimer, Signal, Slot
 
+import src.helpers.helpers as h
 from src.controller.worker import Worker
 from src.model.ereg_driver import eReg
 from src.view.main_window import MainWindow
@@ -26,6 +27,7 @@ class Controller(QObject):
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.new_address_sig.connect(self.receive_new_address_sig)
+        self.mw.new_pressure_sig.connect(self.receive_new_pressure_sig)
 
         if self.ereg.sock:
             self.timer.start()
@@ -75,6 +77,17 @@ class Controller(QObject):
         self.mw.error_popup(error)
 
     # --- MainWindow Slots ---
+
+    @Slot()
+    def receive_new_pressure_sig(self, pressure: str) -> None:
+        """
+        Signal received from the `MainWindow` class.
+
+        Sends the new pressure setting to the e-regulator.
+        """
+        p = float(pressure)
+        p = round(h.convert_mbar_to_psi(p), 2)
+        self.ereg.pressure = p
 
     @Slot()
     def receive_new_address_sig(self, ip: str, port: int) -> None:

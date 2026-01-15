@@ -1,5 +1,5 @@
-from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import QAction, QCloseEvent
+from PySide6.QtCore import QRegularExpression, Qt, Signal, Slot
+from PySide6.QtGui import QAction, QCloseEvent, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QErrorMessage,
     QFormLayout,
@@ -20,6 +20,7 @@ from src.view.reconnect_window import ReconnectWindow
 class MainWindow(QMainWindow):
     closing_sig = Signal()
     new_address_sig = Signal(str, int)
+    new_pressure_sig = Signal(str)
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -44,15 +45,26 @@ class MainWindow(QMainWindow):
         )
         self.resize(300, 100)
 
+        # Create the validator for numerical inputs
+        number_regex = QRegularExpression(r'^[0-9]{0,4}$')
+        validator = QRegularExpressionValidator(number_regex)
+
         self._create_menubar()
 
         self.pressure_label = QLabel('Pressure:')
         self.pressure_reading_label = QLabel('- - - - mBar')
         self.pressure_setting_label = QLabel('Setting:')
         self.pressure_setting_entry = QLineEdit()
+        self.pressure_setting_entry.setValidator(validator)
+        self.pressure_setting_entry.setPlaceholderText('Enter Pressure...')
+        self.pressure_setting_entry.editingFinished.connect(self.handle_pressure_input)
+
+        # Store the current valid text to revert if pressure_setting_entry is empty.
+        self.last_valid_pressure = ''
 
         # --- Create the layout ---
         central_widget = QWidget()
+        central_widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setCentralWidget(central_widget)
 
         main_layout = QVBoxLayout(central_widget)
@@ -98,6 +110,18 @@ class MainWindow(QMainWindow):
         pressure_mbar = h.convert_psi_to_mbar(pressure)
         text = f'{pressure_mbar:.0f} mBar'
         self.pressure_reading_label.setText(text)
+
+    def handle_pressure_input(self) -> None:
+        current_text = self.pressure_setting_entry.text().strip()
+
+        if not current_text:
+            # If blank, repopulate with the last known valid text
+            self.pressure_setting_entry.setText(self.last_valid_pressure)
+            return
+
+        self.last_valid_pressure = current_text
+        self.new_pressure_sig.emit(current_text)
+        self.pressure_setting_entry.clearFocus()
 
     # --- Menu Option Handlers ---
 
