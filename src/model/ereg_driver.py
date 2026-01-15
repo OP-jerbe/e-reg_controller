@@ -14,8 +14,8 @@ ERROR_RESPONSES = {
 
 
 class eReg:
-    DEFAULT_PORT: int = 10001
-    DEFAULT_TIMEOUT: float = 5.0
+    PORT: int = 10001
+    TIMEOUT: float = 5.0
 
     def __init__(self) -> None:
         self._lock = Lock()
@@ -67,23 +67,26 @@ class eReg:
 
     @staticmethod
     def _get_IP_address() -> str:
+        """
+        Reads the IP address from the ini file.
+        """
         config_data = h.load_ini()
-        ip = h.find_selection(config_data, 'IPAddress', 'IPAddress')
+        ip = config_data.get('IPAddress', 'IPAddress')
         return ip
 
     def open_connection(
         self,
         ip: str | None = None,
-        port: int = DEFAULT_PORT,
-        timeout: float = DEFAULT_TIMEOUT,
+        port: int = PORT,
+        timeout: float = TIMEOUT,
     ) -> SocketType | None:
         """
         Establishes a TCP connection to the instrument at the specified IP address and port.
 
         Args:
             ip (str): The IP address of the instrument.
-            port (int): The port number to connect to. Defaults to `DEFAULT_PORT`.
-            timeout (float): The connection timeout in seconds. Defaults to `DEFAULT_TIMEOUT`.
+            port (int): The port number to connect to. Defaults to `PORT`.
+            timeout (float): The connection timeout in seconds. Defaults to `TIMEOUT`.
 
         Returns:
             SocketType | None: The active socket object if the connection is successful,

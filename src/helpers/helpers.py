@@ -7,6 +7,20 @@ from PySide6.QtGui import QIcon
 
 
 def get_app_version() -> str:
+    """
+    Retrieves the current version of the application.
+
+    Attempts to fetch the version metadata for the 'e_reg_controller' package.
+    This is typically used when the application is installed via pip or
+    bundled as a package.
+
+    Returns:
+        str: The version string (e.g., '1.0.0') if the package is installed,
+            otherwise returns 'development-build'.
+
+    Note:
+        Relies on `importlib.metadata.version`.
+    """
     try:
         return version('e_reg_controller')
     except PackageNotFoundError:
@@ -14,6 +28,21 @@ def get_app_version() -> str:
 
 
 def get_icon() -> QIcon:
+    """
+    Loads the application icon from the assets directory.
+
+    Constructs the absolute path to the 'icon.ico' file using the root
+    directory helper to ensure compatibility between development
+    environments and compiled executables.
+
+    Returns:
+        QIcon: A Qt icon object. If the file is not found at the
+            calculated path, an empty QIcon is returned.
+
+    Note:
+        Expects the icon to be located at 'assets/icon.ico' relative
+        to the application root.
+    """
     root_dir: Path = get_root_dir()
     icon_path: str = str(root_dir / 'assets' / 'icon.ico')
     return QIcon(icon_path)
@@ -21,10 +50,21 @@ def get_icon() -> QIcon:
 
 def get_root_dir() -> Path:
     """
-    Get the root directory of the __main__ file.
+    Determines the base directory of the application.
+
+    This function identifies the root path whether the script is running
+    in a standard Python interpreter or as a bundled executable (e.g.,
+    created by PyInstaller).
 
     Returns:
-        Path: The path to the root directory.
+        Path: The absolute path to the application root directory.
+            If frozen, returns the temporary extraction directory (_MEIPASS).
+            If not frozen, returns the grandparent directory of this file.
+
+    Notes:
+        - 'sys.frozen' is a flag set by PyInstaller.
+        - '_MEIPASS' is the internal attribute PyInstaller uses to store
+          the path to the temporary folder where resources are unpacked.
     """
     if getattr(sys, 'frozen', False):  # Check if running from the PyInstaller EXE
         return Path(getattr(sys, '_MEIPASS', '.'))
@@ -33,37 +73,79 @@ def get_root_dir() -> Path:
 
 
 def _get_ini_filepath() -> Path:
+    """
+    Constructs the absolute path to the application's configuration file.
+
+    This internal helper utilizes `get_root_dir()` to ensure the path is
+    resolved correctly regardless of whether the application is running
+    from source or as a bundled executable.
+
+    Returns:
+        Path: The absolute path pointing to 'configuration/config.ini'
+            relative to the application root.
+
+    Note:
+        This function defines the expected project structure where the
+        INI file must reside within a 'configuration' directory.
+    """
     root_dir = get_root_dir()
     ini_filepath = Path(root_dir / 'configuration' / 'config.ini')
     return ini_filepath
 
 
 def load_ini() -> ConfigParser:
+    """
+    Loads and parses the application configuration from an INI file.
+
+    This helper function locates the configuration file path using
+    `_get_ini_filepath()`, initializes a ConfigParser object, and
+    reads the file data into memory.
+
+    Returns:
+        ConfigParser: A populated configuration object containing the
+            settings defined in the INI file.
+
+    Note:
+        If the INI file does not exist at the resolved path, the returned
+        ConfigParser object will be empty rather than raising a FileNotFoundError,
+        per the standard behavior of `ConfigParser.read()`.
+    """
     config_data = ConfigParser()
     ini_filepath: Path = _get_ini_filepath()
     config_data.read(str(ini_filepath))
     return config_data
 
 
-def find_selection(config_data: ConfigParser, header: str, selection: str) -> str:
-    return config_data.get(header, f'{selection}')
-
-
 def convert_psi_to_mbar(pressure: float) -> float:
     """
-    Converts a pressure reading from PSI to mBar.
+    Converts a pressure value from pounds per square inch (PSI) to millibars (mBar).
+
+    The conversion uses the factor: 1 PSI ≈ 68.9476 mBar.
 
     Args:
-        pressure (float): The pressure value in PSI.
+        pressure (float): The pressure value in PSI to be converted.
 
     Returns:
-        float: The pressure value in mBar.
+        float: The equivalent pressure value in mBar.
+
+    Raises:
+        ValueError: If the provided pressure is not a numeric type (int or float).
+
+    Note:
+        This function performs a strict type check to ensure mathematical
+        reliability during hardware data processing.
     """
+
+    if not isinstance(pressure, int | float):
+        raise ValueError(
+            f'Expected int or float but received {type(pressure).__name__}.'
+        )
+
     return pressure * 68.9476
 
 
 if __name__ == '__main__':
     # How to get the data in the ini file
     config_data = load_ini()
-    IPAddress = find_selection(config_data, 'IPAddress', 'IPAddress')
+    IPAddress = config_data.get('IPAddress', 'IPAddress')
     print(IPAddress)

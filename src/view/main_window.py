@@ -26,7 +26,14 @@ class MainWindow(QMainWindow):
         self.ereg = model
         self._create_gui()
 
+    # --- GUI creation methods ---
+
     def _create_gui(self) -> None:
+        """
+        Creates the GUI for the `MainWindow`.
+
+        Creates the widgets and sets styling and layout.
+        """
         ver = h.get_app_version()
         self.setWindowTitle(f'e-Reg Controller v{ver}')
         icon = h.get_icon()
@@ -61,6 +68,11 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.container_frame)
 
     def _create_menubar(self) -> None:
+        """
+        Creates the manubar in the `MainWindow` to allow the user to
+        reconnect with the e-reg if the connection is lost or to exit
+        the application.
+        """
         self.exit_action = QAction(text='Exit', parent=self)
         self.connect_action = QAction(text='Connect', parent=self)
 
@@ -74,6 +86,8 @@ class MainWindow(QMainWindow):
         self.exit_action.triggered.connect(self.handle_exit_triggered)
         self.connect_action.triggered.connect(self.handle_connect_triggered)
 
+    # --- GUI Updating methods ---
+
     def update_pressure_reading(self, pressure: float) -> None:
         """
         Updates the pressure reading on the UI.
@@ -85,12 +99,20 @@ class MainWindow(QMainWindow):
         text = f'{pressure_mbar:.0f} mBar'
         self.pressure_reading_label.setText(text)
 
+    # --- Menu Option Handlers ---
+
     def handle_exit_triggered(self) -> None:
+        """
+        Closes the `MainWindow`.
+        """
         self.close()
 
     def handle_connect_triggered(self) -> None:
+        """
+        Opens the `ReconnectWindow`.
+        """
         ip = self.ereg.ip_address
-        port = self.ereg.DEFAULT_PORT
+        port = self.ereg.PORT
         sock = self.ereg.sock
         recon_window = ReconnectWindow(self, ip, port, sock)
         recon_window.new_address_sig.connect(self.receive_new_address_sig)
@@ -98,13 +120,30 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def receive_new_address_sig(self, ip: str, port: str) -> None:
+        """
+        Signal received from `ReconnectWindow`.
+
+        Passes along the `ip` address and `port` number from
+        the `ReconnectWindow` to the `Controller`.
+        """
         self.new_address_sig.emit(ip, int(port))
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        This method runs when the `MainWindow` is closed.
+
+        The `closing_sig` is sent to the `Controller` to
+        stop the timer and background thread.
+        """
         self.closing_sig.emit()
         event.accept()
         super().closeEvent(event)
 
+    # --- Error popup ---
+
     def error_popup(self, error: str) -> None:
+        """
+        Displays a popup window with an error message.
+        """
         error_dialog = QErrorMessage(self)
         error_dialog.showMessage(error)
