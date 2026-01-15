@@ -54,11 +54,10 @@ class Worker(QObject):
                 return
         try:
             response: str = self.ereg.send_buffer()
-            print(f'{response = }')
-            if response == 'sbe':  # send buffer error
-                return
 
-            if response == 'scr':  # sample complete response
+            # Check if any characters in `response` are letters.
+            # Only procede if the response is full of numbers.
+            if any(char.isalpha() for char in response):
                 return
 
             buffer_contents: list[str] = response.split()
