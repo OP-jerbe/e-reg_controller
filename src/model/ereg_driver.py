@@ -21,9 +21,11 @@ class eReg:
         self._lock = Lock()
         self.sock: Optional[SocketType] = None
         self.ip_address: str = self._get_IP_address()
+        self.cal_pressure: float = float('nan')
 
         try:
             self.open_connection()
+            self.cal_pressure = float(self.calibration_pressure)
         except:
             pass
 
@@ -250,7 +252,7 @@ class eReg:
         if not isinstance(value, int):
             raise ValueError(f'Received {type(value).__name__} but expected int.')
 
-        if not 0 <= value <= float(self.calibration_pressure):
+        if not 0 <= value <= self.cal_pressure:
             raise ValueError(
                 f'Invalid fault pressure value: {value}. Must be between 0 and {self.cal_pressure}.'
             )
@@ -323,7 +325,7 @@ class eReg:
                 f'Received {type(value).__name__} but expected int or float.'
             )
 
-        if not 0 <= value <= float(self.calibration_pressure):
+        if not 0 <= value <= self.cal_pressure:
             raise ValueError(
                 f'Invalid pressure setting value: {value}. Must be between 0 and {self.cal_pressure}.'
             )

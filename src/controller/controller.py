@@ -82,7 +82,8 @@ class Controller(QObject):
         Signal received from the `MainWindow` class.
 
         Tries to open a socket connection to the e-reg with `ip` and `port`.
-        If successful, `self.timer` is started to begin reading data.
+        If successful, the ip address is set and the calibration pressure is
+        initialized. Then, `self.timer` is started to begin reading data.
         """
         sock = self.ereg.open_connection(ip, port)
         if not sock:
@@ -90,6 +91,7 @@ class Controller(QObject):
             self.mw.error_popup(error)
             return
         self.ereg.ip_address = ip
+        self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
         self.timer.start()
 
     @Slot()
