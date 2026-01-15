@@ -154,7 +154,7 @@ class eReg:
         metadata = self.metadata.split(', ')
         return metadata[-1]
 
-    # --- Default GETTERS and SETTERS ---
+    # --- Default Settings GETTERS and SETTERS ---
 
     @property
     def defaults(self) -> str:
