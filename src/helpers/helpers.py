@@ -145,6 +145,24 @@ def convert_psi_to_mbar(pressure: float) -> float:
 
 
 def convert_mbar_to_psi(pressure: float) -> float:
+    """
+    Converts a pressure value from millibars (mBar) to pounds per square inch (PSI).
+
+    The conversion uses the factor: 1 mBar ≈ 0.0145038 PSI.
+
+    Args:
+        pressure (float): The pressure value in mBar to be converted.
+
+    Returns:
+        float: The equivalent pressure value in PSI.
+
+    Raises:
+        ValueError: If the provided pressure is not a numeric type (int or float).
+
+    Note:
+        This is the inverse of the PSI-to-mBar conversion and is used to
+        translate user setpoints into the units required by the hardware.
+    """
     if not isinstance(pressure, int | float):
         raise ValueError(
             f'Received {type(pressure).__name__} but expected int or float.'
