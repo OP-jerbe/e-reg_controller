@@ -28,9 +28,18 @@ class Controller(QObject):
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.new_address_sig.connect(self.receive_new_address_sig)
         self.mw.pressure_change_sig.connect(self.receive_pressure_change_sig)
+        self.mw.operate_sig.connect(self.receive_operate_sig)
+        self.mw.pressurize_sig.connect(self.receive_pressurize_sig)
+        self.mw.vent_sig.connect(self.receive_vent_sig)
 
         if self.ereg.sock:
-            self.timer.start()
+            self._init_ereg()
+
+    def _init_ereg(self) -> None:
+        self.mw.operate_btn.setEnabled(True)
+        self.ereg.valves_off()
+        self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
+        self.timer.start()
 
     # --- Controller Slots ---
 
@@ -63,6 +72,9 @@ class Controller(QObject):
         """
         self.timer.stop()
         self.mw.pressure_reading_label.setText('- - - - mBar')
+        self.mw.operate_btn.setChecked(False)
+        self.mw.operate_btn.setText('OFF')
+        self.mw.operate_btn.setEnabled(False)
         self.mw.error_popup(error)
 
     @Slot()
@@ -77,6 +89,31 @@ class Controller(QObject):
         self.mw.error_popup(error)
 
     # --- MainWindow Slots ---
+
+    @Slot()
+    def receive_operate_sig(self, checked: bool) -> None:
+        if checked:
+            self.ereg.valves_on()
+            self.mw.operate_btn.setText('ON')
+        else:
+            self.ereg.valves_off()
+            self.mw.operate_btn.setText('OFF')
+
+    @Slot()
+    def receive_pressurize_sig(self) -> None:
+        if not self.mw.operate_btn.isChecked():
+            print('operate button not checked')
+            return
+        print(f'setting the pressure to {self.mw.pressure_setting_entry.text()}')
+        self.mw.handle_pressure_input()  # set the pressure
+
+    @Slot()
+    def receive_vent_sig(self) -> None:
+        if not self.mw.operate_btn.isChecked():
+            print('operate button not checked')
+            return
+        print('setting the pressure to 0')
+        self.ereg.pressure = 0
 
     @Slot()
     def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:
@@ -125,8 +162,7 @@ class Controller(QObject):
             self.mw.error_popup(error)
             return
         self.ereg.ip_address = ip
-        self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
-        self.timer.start()
+        self._init_ereg()
 
     @Slot()
     def receive_closing_sig(self) -> None:
