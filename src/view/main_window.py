@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         self.exit_action = QAction(text='Exit', parent=self)
         self.connect_action = QAction(text='Connect', parent=self)
         self.pressure_sweep_action = QAction(text='Pressure Sweep', parent=self)
+        self.pressure_sweep_action.setEnabled(False)
 
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu('File')

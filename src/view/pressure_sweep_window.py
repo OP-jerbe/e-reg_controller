@@ -95,7 +95,7 @@ class PressureSweepWindow(QMainWindow):
 
     def handle_start_clicked(self) -> None:
         self.start_clicked = True
-        span_ok = self.check_span()
+        span_ok: bool = self.check_span()
         if not span_ok:
             self.start_clicked = False
             return

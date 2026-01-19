@@ -35,12 +35,16 @@ class Controller(QObject):
 
         if self.ereg.sock:
             self._init_ereg()
+            self._init_mw()
 
     def _init_ereg(self) -> None:
-        self.mw.operate_btn.setEnabled(True)
         self.ereg.valves_off()
         self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
         self.timer.start()
+
+    def _init_mw(self) -> None:
+        self.mw.operate_btn.setEnabled(True)
+        self.mw.pressure_sweep_action.setEnabled(True)
 
     # --- Controller Slots ---
 
@@ -172,6 +176,7 @@ class Controller(QObject):
             return
         self.ereg.ip_address = ip
         self._init_ereg()
+        self._init_mw()
 
     @Slot()
     def receive_closing_sig(self) -> None:
