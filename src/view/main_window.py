@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
     operate_sig = Signal(bool)
     pressurize_sig = Signal()
     vent_sig = Signal()
+    pressure_sweep_sig = Signal()
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -132,16 +133,22 @@ class MainWindow(QMainWindow):
         """
         self.exit_action = QAction(text='Exit', parent=self)
         self.connect_action = QAction(text='Connect', parent=self)
+        self.pressure_sweep_action = QAction(text='Pressure Sweep', parent=self)
 
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu('File')
+        self.tools_menu = self.menu_bar.addMenu('Tools')
         # self.help_menu = self.menu_bar.addMenu('Help')
 
         self.file_menu.addAction(self.connect_action)
         self.file_menu.addAction(self.exit_action)
+        self.tools_menu.addAction(self.pressure_sweep_action)
 
         self.exit_action.triggered.connect(self.handle_exit_triggered)
         self.connect_action.triggered.connect(self.handle_connect_triggered)
+        self.pressure_sweep_action.triggered.connect(
+            self.handle_pressure_sweep_triggered
+        )
 
     # --- GUI Updating methods ---
 
@@ -187,6 +194,9 @@ class MainWindow(QMainWindow):
         self.handle_rb_selected(rb_id)
 
     # --- Menu Option Handlers ---
+
+    def handle_pressure_sweep_triggered(self) -> None:
+        print('pressure sweep triggered')
 
     def handle_exit_triggered(self) -> None:
         """
