@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
         self.operate_sig.emit(self.operate_btn.isChecked())
         self.handle_rb_selected(rb_id)
 
-    # --- Menu Option Handlers ---
+    # --- Pressure Sweep ---
 
     def handle_pressure_sweep_triggered(self) -> None:
         current_pressure: int = int(self.pressure_setting_entry.text())
@@ -218,11 +218,7 @@ class MainWindow(QMainWindow):
                 error_text = f'A span of {span} mBar will cause the gas line pressure to rise above 3033 mBar which is not allowed. Lower the starting pressure and try again.'
         self.error_popup(error_text)
 
-    def handle_exit_triggered(self) -> None:
-        """
-        Closes the `MainWindow`.
-        """
-        self.close()
+    # --- Reconnect to device ---
 
     def handle_connect_triggered(self) -> None:
         """
@@ -244,6 +240,14 @@ class MainWindow(QMainWindow):
         the `ReconnectWindow` to the `Controller`.
         """
         self.new_address_sig.emit(ip, int(port))
+
+    # --- Exit/Closing Application ---
+
+    def handle_exit_triggered(self) -> None:
+        """
+        Closes the `MainWindow`.
+        """
+        self.close()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """
