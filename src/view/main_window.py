@@ -18,6 +18,7 @@ from qt_material import apply_stylesheet
 
 import src.helpers.helpers as h
 from src.model.ereg_driver import eReg
+from src.view.pressure_sweep_window import PressureSweepWindow
 from src.view.reconnect_window import ReconnectWindow
 
 
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
     operate_sig = Signal(bool)
     pressurize_sig = Signal()
     vent_sig = Signal()
-    pressure_sweep_sig = Signal()
+    pressure_sweep_sig = Signal(str, str, str)
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -196,7 +197,16 @@ class MainWindow(QMainWindow):
     # --- Menu Option Handlers ---
 
     def handle_pressure_sweep_triggered(self) -> None:
-        print('pressure sweep triggered')
+        current_pressure: int = int(self.pressure_setting_entry.text())
+        pressure_sweep_window = PressureSweepWindow(self, current_pressure)
+        pressure_sweep_window.pressure_sweep_sig.connect(
+            self.receive_pressure_sweep_sig
+        )
+        pressure_sweep_window.show()
+
+    @Slot()
+    def receive_pressure_sweep_sig(self, span: str, rate: str, direction: str) -> None:
+        self.pressure_sweep_sig.emit(span, rate, direction)
 
     def handle_exit_triggered(self) -> None:
         """

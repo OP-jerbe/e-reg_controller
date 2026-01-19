@@ -31,6 +31,7 @@ class Controller(QObject):
         self.mw.operate_sig.connect(self.receive_operate_sig)
         self.mw.pressurize_sig.connect(self.receive_pressurize_sig)
         self.mw.vent_sig.connect(self.receive_vent_sig)
+        self.mw.pressure_sweep_sig.connect(self.receive_pressure_sweep_sig)
 
         if self.ereg.sock:
             self._init_ereg()
@@ -89,6 +90,14 @@ class Controller(QObject):
         self.mw.error_popup(error)
 
     # --- MainWindow Slots ---
+
+    @Slot()
+    def receive_pressure_sweep_sig(self, span: str, rate: str, direction: str) -> None:
+        span_int = int(span)
+        rate_int = int(rate)
+        print(f'{span_int = }')
+        print(f'{rate_int = }')
+        print(f'{direction = }')
 
     @Slot()
     def receive_operate_sig(self, checked: bool) -> None:
