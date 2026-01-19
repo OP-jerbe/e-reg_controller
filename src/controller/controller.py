@@ -1,6 +1,7 @@
 from PySide6.QtCore import QObject, QThread, QTimer, Signal, Slot
 
 import src.helpers.helpers as h
+from src.controller.sweep_worker import SweepWorker
 from src.controller.worker import Worker
 from src.model.ereg_driver import eReg
 from src.view.main_window import MainWindow
@@ -31,7 +32,7 @@ class Controller(QObject):
         self.mw.operate_sig.connect(self.receive_operate_sig)
         self.mw.pressurize_sig.connect(self.receive_pressurize_sig)
         self.mw.vent_sig.connect(self.receive_vent_sig)
-        self.mw.pressure_sweep_sig.connect(self.receive_pressure_sweep_sig)
+        self.mw.start_pressure_sweep_sig.connect(self.receive_start_pressure_sweep_sig)
 
         if self.ereg.sock:
             self._init_ereg()
@@ -96,12 +97,50 @@ class Controller(QObject):
     # --- MainWindow Slots ---
 
     @Slot()
-    def receive_pressure_sweep_sig(self, span: str, rate: str, direction: str) -> None:
-        span_int = int(span)
-        rate_int = int(rate)
-        print(f'{span_int = }')
-        print(f'{rate_int = }')
-        print(f'{direction = }')
+    def receive_start_pressure_sweep_sig(
+        self, span: str, rate: str, direction: str
+    ) -> None:
+        # Check if a sweep is already running to prevent duplicates
+        try:
+            if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
+                if self.sweep_thread.isRunning():
+                    print('Sweep already in progress...')
+                    return
+        except RuntimeError:
+            # This catches cases where the C++ object was deleted but reference remained
+            self.sweep_thread = None
+
+        current_pressure = int(self.mw.pressure_setting_entry.text())
+        self.sweep_worker = SweepWorker(
+            self.ereg, current_pressure, int(span), int(rate), direction
+        )
+        self.sweep_thread = QThread()
+        self.sweep_worker.moveToThread(self.sweep_thread)
+
+        # Stop thread loop
+        self.sweep_worker.finished_sig.connect(self.sweep_thread.quit)
+        # Delete worker
+        self.sweep_worker.finished_sig.connect(self.sweep_worker.deleteLater)
+        # Delete thread
+        self.sweep_thread.finished.connect(self.sweep_thread.deleteLater)
+
+        self.sweep_worker.finished_sig.connect(self.receive_finished_sig)
+        self.sweep_worker.current_pressure_sig.connect(
+            self.receive_current_pressure_sig
+        )
+
+        self.sweep_thread.started.connect(self.sweep_worker.doWork)
+        self.sweep_thread.start()
+
+    @Slot()
+    def receive_finished_sig(self) -> None:
+        self.mw.pressure_setting_entry.setEnabled(True)
+
+    @Slot()
+    def receive_current_pressure_sig(self, pressure: int) -> None:
+        if self.mw.pressure_setting_entry.isEnabled():
+            self.mw.pressure_setting_entry.setEnabled(False)
+        self.mw.pressure_setting_entry.setText(str(pressure))
 
     @Slot()
     def receive_operate_sig(self, checked: bool) -> None:

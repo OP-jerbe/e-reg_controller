@@ -6,6 +6,7 @@ from src.model.ereg_driver import eReg
 
 class SweepWorker(QObject):
     finished_sig = Signal()
+    current_pressure_sig = Signal(int)
 
     def __init__(
         self, model: eReg, starting_pressure: int, span: int, rate: int, direction: str
@@ -31,7 +32,7 @@ class SweepWorker(QObject):
             self.ereg.pressure = h.convert_mbar_to_psi(self.current_pressure)
             self.current_pressure += self.direction_val
             self.steps_taken += 1
-            print(f'{self.steps_taken = }')
+            self.current_pressure_sig.emit(self.current_pressure)
         else:
             self.timer.stop()
             self.finished_sig.emit()

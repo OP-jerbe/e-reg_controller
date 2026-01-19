@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
     operate_sig = Signal(bool)
     pressurize_sig = Signal()
     vent_sig = Signal()
-    pressure_sweep_sig = Signal(str, str, str)
+    start_pressure_sweep_sig = Signal(str, str, str)
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def receive_start_sweep_sig(self, span: str, rate: str, direction: str) -> None:
-        self.pressure_sweep_sig.emit(span, rate, direction)
+        self.start_pressure_sweep_sig.emit(span, rate, direction)
 
     @Slot()
     def receive_span_error_sig(self, span: int, direction: str) -> None:
