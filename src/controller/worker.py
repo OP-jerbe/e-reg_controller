@@ -65,7 +65,7 @@ class Worker(QObject):
                 return
 
             values: list[float] = [float(value) for value in buffer_contents]
-            print(values)
+            # print(values)
             result: float = float(stats.median(values))
             self.working = False
             self.result_sig.emit(result)
