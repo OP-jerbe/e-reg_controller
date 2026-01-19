@@ -199,14 +199,23 @@ class MainWindow(QMainWindow):
     def handle_pressure_sweep_triggered(self) -> None:
         current_pressure: int = int(self.pressure_setting_entry.text())
         pressure_sweep_window = PressureSweepWindow(self, current_pressure)
-        pressure_sweep_window.pressure_sweep_sig.connect(
-            self.receive_pressure_sweep_sig
-        )
+        pressure_sweep_window.start_sweep_sig.connect(self.receive_start_sweep_sig)
+        pressure_sweep_window.span_error_sig.connect(self.receive_span_error_sig)
         pressure_sweep_window.show()
 
     @Slot()
-    def receive_pressure_sweep_sig(self, span: str, rate: str, direction: str) -> None:
+    def receive_start_sweep_sig(self, span: str, rate: str, direction: str) -> None:
         self.pressure_sweep_sig.emit(span, rate, direction)
+
+    @Slot()
+    def receive_span_error_sig(self, span: int, direction: str) -> None:
+        error_text = ''
+        match direction:
+            case 'H2L':
+                error_text = f'A span of {span} mBar will cause the gas line pressure to fall below 1000 mBar which is not allowed. Raise the starting pressure and try again.'
+            case 'L2H':
+                error_text = f'A span of {span} mBar will cause the gas line pressure to rise above 3033 mBar which is not allowed. Lower the starting pressure and try again.'
+        self.error_popup(error_text)
 
     def handle_exit_triggered(self) -> None:
         """
