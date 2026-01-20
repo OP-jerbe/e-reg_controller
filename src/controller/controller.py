@@ -33,6 +33,7 @@ class Controller(QObject):
         self.mw.pressurize_sig.connect(self.receive_pressurize_sig)
         self.mw.vent_sig.connect(self.receive_vent_sig)
         self.mw.start_pressure_sweep_sig.connect(self.receive_start_pressure_sweep_sig)
+        self.mw.stop_pressure_sweep_sig.connect(self.receive_stop_pressure_sweep_sig)
 
         if self.ereg.sock:
             self._init_ereg()
@@ -131,6 +132,19 @@ class Controller(QObject):
 
         self.sweep_thread.started.connect(self.sweep_worker.doWork)
         self.sweep_thread.start()
+
+    @Slot()
+    def receive_stop_pressure_sweep_sig(self) -> None:
+        print('received stop_pressure_sweep_sig')
+        # try:
+        #     if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
+        #         if self.sweep_thread.isRunning():
+        #             self.sweep_thread.quit()
+        #             self.sweep_thread.deleteLater()
+        #             self.sweep_worker.deleteLater()
+        # except RuntimeError:
+        #     # This catches cases where the C++ object was deleted but reference remained
+        #     self.sweep_thread = None
 
     @Slot()
     def receive_finished_sig(self) -> None:

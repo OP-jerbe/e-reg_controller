@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 class PressureSweepWindow(QMainWindow):
     start_sweep_sig = Signal(str, str, str)  # span, rate, direction
     span_warning_sig = Signal(int, str)  # span, direction
+    stop_sweep_sig = Signal()
 
     def __init__(self, parent: QWidget, current_pressure: int) -> None:
         super().__init__(parent)
@@ -25,7 +26,6 @@ class PressureSweepWindow(QMainWindow):
         self.current_pressure = current_pressure
         self.create_gui()
         self.start_btn.setFocus()
-        self.start_clicked: bool = False
 
     def create_gui(self) -> None:
         # Set the window size
@@ -57,6 +57,10 @@ class PressureSweepWindow(QMainWindow):
         self.start_btn.clicked.connect(self.handle_start_clicked)
         self.start_btn.setAutoDefault(True)
 
+        self.stop_btn = QPushButton('Stop')
+        self.stop_btn.clicked.connect(self.handle_stop_clicked)
+        self.stop_btn.setAutoDefault(True)
+
         rb_group_box = QGroupBox('Sweep Direction')
 
         # Set the layout
@@ -87,6 +91,7 @@ class PressureSweepWindow(QMainWindow):
         main_layout.addLayout(input_layout)
         main_layout.addWidget(rb_group_box)
         main_layout.addWidget(self.start_btn)
+        main_layout.addWidget(self.stop_btn)
 
         self.setLayout(main_layout)
 
@@ -95,12 +100,20 @@ class PressureSweepWindow(QMainWindow):
         self.setCentralWidget(container)
 
     def handle_start_clicked(self) -> None:
-        self.start_clicked = True
-        span_ok: bool = self.check_span()
-        if not span_ok:
-            self.start_clicked = False
+        if not self.check_span():
             return
-        self.close()
+        span = self.span_entry.text()
+        rate = self.rate_entry.text()
+        direction = ''
+        match self.rb_group.checkedId():
+            case 101:
+                direction = 'H2L'
+            case 102:
+                direction = 'L2H'
+        self.start_sweep_sig.emit(span, rate, direction)
+
+    def handle_stop_clicked(self) -> None:
+        self.stop_sweep_sig.emit()
 
     def check_span(self) -> bool:
         span = int(self.span_entry.text())
@@ -120,16 +133,6 @@ class PressureSweepWindow(QMainWindow):
         return True
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self.start_clicked:
-            span = self.span_entry.text()
-            rate = self.rate_entry.text()
-            direction = ''
-            match self.rb_group.checkedId():
-                case 101:
-                    direction = 'H2L'
-                case 102:
-                    direction = 'L2H'
-            self.start_sweep_sig.emit(span, rate, direction)
         event.accept()
         super().closeEvent(event)
 
