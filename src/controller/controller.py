@@ -138,6 +138,9 @@ class Controller(QObject):
             self.receive_current_pressure_sig
         )
 
+        self.sweep_worker.sweep_started_sig.connect(self.receive_sweep_started_sig)
+        self.sweep_worker.sweep_progress_sig.connect(self.receive_sweep_progress_sig)
+
         self.sweep_thread.started.connect(self.sweep_worker.doWork)
         self.sweep_thread.start()
 
@@ -154,14 +157,25 @@ class Controller(QObject):
             self.sweep_worker = None
 
     @Slot()
+    def receive_sweep_started_sig(self, maximum_steps: int) -> None:
+        self.mw.sweep_progress_bar.setMaximum(maximum_steps)
+
+    @Slot()
     def receive_sweep_finished_sig(self) -> None:
         self.mw.pressure_setting_entry.setEnabled(True)
+        self.mw.start_sweep_btn.setEnabled(True)
+        self.mw.stop_sweep_btn.setEnabled(False)
+        self.mw.sweep_progress_bar.setValue(0)
 
     @Slot()
     def receive_current_pressure_sig(self, pressure: int) -> None:
         if self.mw.pressure_setting_entry.isEnabled():
             self.mw.pressure_setting_entry.setEnabled(False)
         self.mw.pressure_setting_entry.setText(str(pressure))
+
+    @Slot()
+    def receive_sweep_progress_sig(self, steps_taken: int) -> None:
+        self.mw.sweep_progress_bar.setValue(steps_taken)
 
     # --- Main Tab Signals ---
 

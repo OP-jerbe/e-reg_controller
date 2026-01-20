@@ -5,8 +5,10 @@ from src.model.ereg_driver import eReg
 
 
 class SweepWorker(QObject):
+    sweep_started_sig = Signal(int)  # target_count / span
     sweep_finished_sig = Signal()
     current_pressure_sig = Signal(int)
+    sweep_progress_sig = Signal(int)  # steps_taken
 
     def __init__(
         self, model: eReg, starting_pressure: int, span: int, rate: int, direction: str
@@ -26,6 +28,7 @@ class SweepWorker(QObject):
         self.timer.timeout.connect(self.take_step)
 
     def doWork(self) -> None:
+        self.sweep_started_sig.emit(self.target_count)
         self.timer.start()
 
     def take_step(self) -> None:
@@ -38,6 +41,7 @@ class SweepWorker(QObject):
             self.current_pressure += self.direction_val
             self.steps_taken += 1
             self.current_pressure_sig.emit(self.current_pressure)
+            self.sweep_progress_sig.emit(self.steps_taken)
         else:
             self.timer.stop()
             self.sweep_finished_sig.emit()
