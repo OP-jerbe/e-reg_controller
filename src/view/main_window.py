@@ -1,16 +1,20 @@
-from PySide6.QtCore import QRegularExpression, Qt, Signal, Slot
+from PySide6.QtCore import QRegularExpression, Signal, Slot
 from PySide6.QtGui import QAction, QCloseEvent, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QButtonGroup,
     QErrorMessage,
     QFormLayout,
     QFrame,
+    QGridLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QRadioButton,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -18,7 +22,6 @@ from qt_material import apply_stylesheet
 
 import src.helpers.helpers as h
 from src.model.ereg_driver import eReg
-from src.view.pressure_sweep_window import PressureSweepWindow
 from src.view.reconnect_window import ReconnectWindow
 
 
@@ -40,93 +43,6 @@ class MainWindow(QMainWindow):
 
     # --- GUI creation methods ---
 
-    def _create_gui(self) -> None:
-        # --- Window Setup ---
-        ver = h.get_app_version()
-        self.setWindowTitle(f'e-Reg Controller v{ver}')
-        self.setWindowIcon(h.get_icon())
-        self.resize(300, 150)
-
-        apply_stylesheet(self, theme='dark_lightgreen.xml', invert_secondary=True)
-        self.setStyleSheet(
-            self.styleSheet() + 'QLineEdit, QTextEdit {color: lightgreen;}'
-        )
-
-        # --- Logic/Validators ---
-        number_regex = QRegularExpression(r'^[0-9]{0,4}$')
-        validator = QRegularExpressionValidator(number_regex)
-
-        self._create_menubar()
-
-        # --- 1. Initialize Central Widget ---
-        # This acts as the "canvas" for your window
-        central_widget = QWidget()
-        central_widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setCentralWidget(central_widget)
-
-        # The main layout that holds the primary sections
-        main_layout = QVBoxLayout(central_widget)
-
-        # --- 2. Controls Section (Frame) ---
-        self.controls_frame = QFrame()
-        self.controls_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.controls_frame.setLineWidth(2)
-
-        controls_layout = QVBoxLayout(self.controls_frame)
-
-        self.operate_btn = QPushButton('VALVES CLOSED')
-        self.operate_btn.setEnabled(False)
-        self.operate_btn.setCheckable(True)
-        self.operate_btn.setChecked(False)
-        self.operate_btn.clicked.connect(self.handle_operate_btn_clicked)
-
-        self.rb_group = QButtonGroup()
-
-        self.pressurize_rb = QRadioButton('PRESSURIZE')
-        self.pressurize_rb.setChecked(True)
-        self.vent_rb = QRadioButton('VENT')
-
-        self.rb_group.addButton(self.pressurize_rb, 101)
-        self.rb_group.addButton(self.vent_rb, 102)
-
-        press_h_layout = QHBoxLayout()
-        press_h_layout.addWidget(self.pressurize_rb)
-        press_h_layout.addStretch()  # Pushes the RB to the left
-
-        vent_h_layout = QHBoxLayout()
-        vent_h_layout.addWidget(self.vent_rb)
-        vent_h_layout.addStretch()  # Pushes the RB to the left
-
-        controls_layout.addWidget(self.operate_btn)
-        controls_layout.addLayout(press_h_layout)
-        controls_layout.addLayout(vent_h_layout)
-
-        self.rb_group.idClicked.connect(self.handle_rb_selected)
-
-        # --- 3. Pressure Section (Frame) ---
-        self.pressure_setting_frame = QFrame()
-        self.pressure_setting_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.pressure_setting_frame.setLineWidth(2)
-
-        pressure_layout = QFormLayout(self.pressure_setting_frame)
-
-        self.pressure_reading_label = QLabel('- - - - mBar')
-        self.pressure_setting_entry = QLineEdit('0')
-        self.pressure_setting_entry.setValidator(validator)
-        self.pressure_setting_entry.setPlaceholderText('Enter Pressure...')
-        self.pressure_setting_entry.editingFinished.connect(self.handle_pressure_input)
-
-        pressure_layout.addRow('Pressure:', self.pressure_reading_label)
-        pressure_layout.addRow('Setting:', self.pressure_setting_entry)
-
-        # --- 4. Assemble ---
-        # Add the frames directly to the main layout
-        main_layout.addWidget(self.controls_frame)
-        main_layout.addWidget(self.pressure_setting_frame)
-
-        # Add a spacer at the bottom to keep everything at the top if window is resized
-        main_layout.addStretch()
-
     def _create_menubar(self) -> None:
         """
         Creates the manubar in the `MainWindow` to allow the user to
@@ -135,25 +51,182 @@ class MainWindow(QMainWindow):
         """
         self.exit_action = QAction(text='Exit', parent=self)
         self.connect_action = QAction(text='Connect', parent=self)
-        self.pressure_sweep_action = QAction(text='Pressure Sweep', parent=self)
-        self.pressure_sweep_action.setEnabled(False)
 
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu('File')
-        self.tools_menu = self.menu_bar.addMenu('Tools')
         # self.help_menu = self.menu_bar.addMenu('Help')
 
         self.file_menu.addAction(self.connect_action)
         self.file_menu.addAction(self.exit_action)
-        self.tools_menu.addAction(self.pressure_sweep_action)
 
         self.exit_action.triggered.connect(self.handle_exit_triggered)
         self.connect_action.triggered.connect(self.handle_connect_triggered)
-        self.pressure_sweep_action.triggered.connect(
-            self.handle_pressure_sweep_triggered
-        )
+        # self.pressure_sweep_action.triggered.connect(
+        #     self.handle_pressure_sweep_triggered
+        # )
 
-    # --- GUI Updating methods ---
+    def _create_main_tab(self) -> None:
+        # --- Logic/Validators ---
+        pressure_setting_regex = QRegularExpression(r'^[0-9]{0,4}$')
+        pressure_setting_validator = QRegularExpressionValidator(pressure_setting_regex)
+
+        # --- Create the "Main" Tab ---
+        self.main_tab = QWidget()
+        main_tab_layout = QVBoxLayout(self.main_tab)
+
+        # --- Controls Section ---
+        self.controls_frame = QFrame()
+        self.controls_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.controls_frame.setLineWidth(2)
+        controls_layout = QVBoxLayout(self.controls_frame)
+
+        self.operate_btn = QPushButton('DISCONNECTED')
+        self.operate_btn.setEnabled(False)
+        self.operate_btn.setCheckable(True)
+        self.operate_btn.setChecked(False)
+        self.operate_btn.clicked.connect(self.handle_operate_btn_clicked)
+
+        self.operate_rb_group = QButtonGroup()
+        self.pressurize_rb = QRadioButton('PRESSURIZE')
+        self.pressurize_rb.setChecked(True)
+        self.vent_rb = QRadioButton('VENT')
+        self.operate_rb_group.addButton(self.pressurize_rb, 101)
+        self.operate_rb_group.addButton(self.vent_rb, 102)
+
+        press_h_layout = QHBoxLayout()
+        press_h_layout.addWidget(self.pressurize_rb)
+        press_h_layout.addStretch()
+
+        vent_h_layout = QHBoxLayout()
+        vent_h_layout.addWidget(self.vent_rb)
+        vent_h_layout.addStretch()
+
+        controls_layout.addWidget(self.operate_btn)
+        controls_layout.addLayout(press_h_layout)
+        controls_layout.addLayout(vent_h_layout)
+        self.operate_rb_group.idClicked.connect(self.handle_rb_selected)
+
+        # --- Pressure Section ---
+        self.pressure_setting_frame = QFrame()
+        self.pressure_setting_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.pressure_setting_frame.setLineWidth(2)
+        pressure_layout = QFormLayout(self.pressure_setting_frame)
+
+        self.pressure_reading_label = QLabel('- - - - mBar')
+        self.pressure_setting_entry = QLineEdit('0')
+        self.pressure_setting_entry.setValidator(pressure_setting_validator)
+        self.pressure_setting_entry.setPlaceholderText('Enter Pressure...')
+        self.pressure_setting_entry.editingFinished.connect(self.handle_pressure_input)
+
+        pressure_layout.addRow('Pressure:', self.pressure_reading_label)
+        pressure_layout.addRow('Setting:', self.pressure_setting_entry)
+
+        # Assemble the Main Tab
+        main_tab_layout.addWidget(self.controls_frame)
+        main_tab_layout.addWidget(self.pressure_setting_frame)
+        main_tab_layout.addStretch()
+
+    def _create_p_sweep_tab(self) -> None:
+        # --- Logic/Validators ---
+        sweep_regex = QRegularExpression(r'[0-9]*')
+        sweep_validator = QRegularExpressionValidator(sweep_regex)
+
+        # --- 3. Create the Pressure Sweep Tab ---
+        self.sweep_tab = QWidget()
+        self.sweep_tab.setEnabled(False)
+        self.sweep_tab_layout = QVBoxLayout(self.sweep_tab)
+
+        # --- 3a. Settings Section ---
+        self.sweep_settings_frame = QFrame()
+        self.sweep_settings_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.sweep_settings_frame.setLineWidth(2)
+        self.sweep_settings_frame_layout = QGridLayout()
+        # self.sweep_settings_frame_layout = QGridLayout(self.sweep_settings_frame)
+
+        self.span_label = QLabel('Span (mBar)')
+        self.span_entry = QLineEdit('400')
+        self.span_entry.setValidator(sweep_validator)
+
+        self.rate_label = QLabel('Rate (mBar/sec)')
+        self.rate_entry = QLineEdit('2')
+        self.rate_entry.setValidator(sweep_validator)
+
+        self.sweep_settings_frame_layout.addWidget(self.span_label, 0, 0)
+        self.sweep_settings_frame_layout.addWidget(self.span_entry, 1, 0)
+        self.sweep_settings_frame_layout.addWidget(self.rate_label, 0, 1)
+        self.sweep_settings_frame_layout.addWidget(self.rate_entry, 1, 1)
+
+        # --- 3b. Direction Section ---
+        self.direction_rb_group_box = QGroupBox('Sweep Direction')
+
+        self.h2l_rb = QRadioButton('High-to-Low')
+        self.h2l_rb.setChecked(True)
+        self.l2h_rb = QRadioButton('Low-to-High')
+
+        self.sweep_rb_group = QButtonGroup()
+        self.sweep_rb_group.addButton(self.h2l_rb, 201)
+        self.sweep_rb_group.addButton(self.l2h_rb, 202)
+
+        self.h2l_layout = QHBoxLayout()
+        self.h2l_layout.addWidget(self.h2l_rb)
+        self.h2l_layout.addStretch()
+
+        self.l2h_layout = QHBoxLayout()
+        self.l2h_layout.addWidget(self.l2h_rb)
+        self.l2h_layout.addStretch()
+
+        self.direction_rb_group_layout = QHBoxLayout()
+        self.direction_rb_group_layout.addLayout(self.h2l_layout)
+        self.direction_rb_group_layout.addLayout(self.l2h_layout)
+
+        self.direction_rb_group_box.setLayout(self.direction_rb_group_layout)
+
+        # --- Start/Stop Section ---
+        self.sweep_start_stop_frame = QFrame()
+        self.sweep_start_stop_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.sweep_start_stop_frame.setLineWidth(2)
+        self.sweep_start_stop_frame_layout = QVBoxLayout()
+
+        self.start_sweep_btn = QPushButton('Start')
+        self.start_sweep_btn.clicked.connect(self.handle_start_sweep_btn_clicked)
+        self.start_sweep_btn.setAutoDefault(True)
+
+        self.stop_sweep_btn = QPushButton('Stop')
+        self.stop_sweep_btn.setEnabled(False)
+        self.stop_sweep_btn.clicked.connect(self.handle_stop_sweep_btn_clicked)
+        self.stop_sweep_btn.setAutoDefault(True)
+
+        self.sweep_start_stop_frame_layout.addWidget(self.start_sweep_btn)
+        self.sweep_start_stop_frame_layout.addWidget(self.stop_sweep_btn)
+
+        # Assemble the Pressure Sweep tab
+        self.sweep_tab_layout.addLayout(self.sweep_settings_frame_layout)
+        self.sweep_tab_layout.addWidget(self.direction_rb_group_box)
+        self.sweep_tab_layout.addLayout(self.sweep_start_stop_frame_layout)
+
+        # --- 4. Add Tabs to Widget ---
+        self.tabs.addTab(self.main_tab, 'Main')
+        self.tabs.addTab(self.sweep_tab, 'P. Sweep')
+
+    def _create_gui(self) -> None:
+        # --- Window Setup ---
+        ver = h.get_app_version()
+        self.setWindowTitle(f'e-Reg Controller v{ver}')
+        self.setWindowIcon(h.get_icon())
+        self.resize(350, 100)  # Increased height slightly to accommodate tab bar
+        apply_stylesheet(self, theme='dark_lightgreen.xml', invert_secondary=True)
+
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet(
+            self.styleSheet() + 'QLineEdit, QTextEdit {color: lightgreen;}'
+        )
+        self.setCentralWidget(self.tabs)
+
+        self._create_menubar()
+        self._create_main_tab()
+        self._create_p_sweep_tab()
+
+    # --- Main tab methods ---
 
     def handle_rb_selected(self, id: int) -> None:
         match id:
@@ -192,26 +265,76 @@ class MainWindow(QMainWindow):
         self.pressure_setting_entry.clearFocus()
 
     def handle_operate_btn_clicked(self) -> None:
-        rb_id: int = self.rb_group.checkedId()
+        rb_id: int = self.sweep_rb_group.checkedId()
         self.operate_sig.emit(self.operate_btn.isChecked())
         self.handle_rb_selected(rb_id)
 
-    # --- Pressure Sweep ---
+    # --- Pressure Sweep tab methods ---
 
-    def handle_pressure_sweep_triggered(self) -> None:
-        current_pressure: int = int(self.pressure_setting_entry.text())
-        pressure_sweep_window = PressureSweepWindow(self, current_pressure)
-        pressure_sweep_window.start_sweep_sig.connect(self.receive_start_sweep_sig)
-        pressure_sweep_window.stop_sweep_sig.connect(self.receive_stop_sweep_sig)
-        pressure_sweep_window.show()
+    def _check_span(self) -> bool:
+        current_pressure_setting = int(self.pressure_setting_entry.text())
+        span = int(self.span_entry.text())
+        match self.sweep_rb_group.checkedId():
+            case 201:
+                direction = 'H2L'
+                if current_pressure_setting - span < 0:
+                    self.span_error_popup(span, direction)
+                    return False
+                if current_pressure_setting - span < 1000:
+                    return self.low_pressure_warning_popup(span)
+            case 202:
+                direction = 'L2H'
+                if current_pressure_setting + span > 3033:
+                    self.span_error_popup(span, direction)
+                    return False
+        return True
 
-    @Slot()
-    def receive_start_sweep_sig(self, span: str, rate: str, direction: str) -> None:
+    def handle_start_sweep_btn_clicked(self) -> None:
+        if not self._check_span():
+            return
+        span = self.span_entry.text()
+        rate = self.rate_entry.text()
+        direction = ''
+        match self.sweep_rb_group.checkedId():
+            case 201:
+                direction = 'H2L'
+            case 202:
+                direction = 'L2H'
+        self.start_sweep_btn.setEnabled(False)
+        self.stop_sweep_btn.setEnabled(True)
         self.start_pressure_sweep_sig.emit(span, rate, direction)
 
-    @Slot()
-    def receive_stop_sweep_sig(self) -> None:
+    def handle_stop_sweep_btn_clicked(self) -> None:
+        self.start_sweep_btn.setEnabled(True)
+        self.stop_sweep_btn.setEnabled(False)
         self.stop_pressure_sweep_sig.emit()
+
+    def low_pressure_warning_popup(self, span: int) -> bool:
+        window_title = 'Span Warning'
+        warning_message = f'A sweep of {span} mBar will cause the gas line pressure to fall below 1000 mBar are you sure you want to procede?'
+        reply = QMessageBox.warning(
+            self,
+            window_title,
+            warning_message,
+            buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            defaultButton=QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            return True
+        else:
+            return False
+
+    def span_error_popup(self, span: int, direction: str) -> None:
+        window_title = 'Span Error'
+        error_message = ''
+        match direction:
+            case 'H2L':
+                error_message = f'A sweep of {span} mBar will attempt to set the gas line pressure below 0 mBar which is not allowed.'
+            case 'L2H':
+                error_message = f'A sweep of {span} mBar will attempt to set the gas line pressure above 3033 mBar which is not allowed.'
+        _ = QMessageBox.critical(
+            self, window_title, error_message, QMessageBox.StandardButton.Ok
+        )
 
     # --- Reconnect to device ---
 

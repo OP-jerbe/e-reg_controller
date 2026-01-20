@@ -46,9 +46,11 @@ class Controller(QObject):
 
     def _init_mw(self) -> None:
         self.mw.operate_btn.setEnabled(True)
-        self.mw.pressure_sweep_action.setEnabled(True)
+        self.mw.operate_btn.setText('VALVES CLOSED')
 
-    # --- Controller Slots ---
+    ####################################
+    ######### Controller Slots #########
+    ####################################
 
     @Slot()
     def receive_timeout_sig(self) -> None:
@@ -59,7 +61,9 @@ class Controller(QObject):
         """
         self.worker.doWork()
 
-    # --- Worker Slots ---
+    ####################################
+    ########## Worker Slots ############
+    ####################################
 
     @Slot()
     def receive_result_sig(self, result: float) -> None:
@@ -80,8 +84,9 @@ class Controller(QObject):
         self.timer.stop()
         self.mw.pressure_reading_label.setText('- - - - mBar')
         self.mw.operate_btn.setChecked(False)
-        self.mw.operate_btn.setText('OFF')
+        self.mw.operate_btn.setText('DISCONNECTED')
         self.mw.operate_btn.setEnabled(False)
+        self.mw.sweep_tab.setEnabled(False)
         self.mw.error_popup(error)
 
     @Slot()
@@ -95,8 +100,11 @@ class Controller(QObject):
         self.mw.pressure_reading_label.setText('---- mBar')
         self.mw.error_popup(error)
 
-    # --- MainWindow Slots ---
+    ####################################
+    ######### MainWindow Slots #########
+    ####################################
 
+    # --- Pressure Sweep Tab Signals ---
     @Slot()
     def receive_start_pressure_sweep_sig(
         self, span: str, rate: str, direction: str
@@ -119,13 +127,13 @@ class Controller(QObject):
         self.sweep_worker.moveToThread(self.sweep_thread)
 
         # Stop thread loop
-        self.sweep_worker.finished_sig.connect(self.sweep_thread.quit)
+        self.sweep_worker.sweep_finished_sig.connect(self.sweep_thread.quit)
         # Delete worker
-        self.sweep_worker.finished_sig.connect(self.sweep_worker.deleteLater)
+        self.sweep_worker.sweep_finished_sig.connect(self.sweep_worker.deleteLater)
         # Delete thread
         self.sweep_thread.finished.connect(self.sweep_thread.deleteLater)
 
-        self.sweep_worker.finished_sig.connect(self.receive_finished_sig)
+        self.sweep_worker.sweep_finished_sig.connect(self.receive_sweep_finished_sig)
         self.sweep_worker.current_pressure_sig.connect(
             self.receive_current_pressure_sig
         )
@@ -135,19 +143,18 @@ class Controller(QObject):
 
     @Slot()
     def receive_stop_pressure_sweep_sig(self) -> None:
-        print('received stop_pressure_sweep_sig')
-        # try:
-        #     if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
-        #         if self.sweep_thread.isRunning():
-        #             self.sweep_thread.quit()
-        #             self.sweep_thread.deleteLater()
-        #             self.sweep_worker.deleteLater()
-        # except RuntimeError:
-        #     # This catches cases where the C++ object was deleted but reference remained
-        #     self.sweep_thread = None
+        try:
+            if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
+                if self.sweep_thread.isRunning():
+                    if hasattr(self, 'sweep_worker') and self.sweep_worker:
+                        self.sweep_worker.stop()
+        except RuntimeError:
+            # This catches cases where the C++ object was deleted but reference remained
+            self.sweep_thread = None
+            self.sweep_worker = None
 
     @Slot()
-    def receive_finished_sig(self) -> None:
+    def receive_sweep_finished_sig(self) -> None:
         self.mw.pressure_setting_entry.setEnabled(True)
 
     @Slot()
@@ -156,26 +163,33 @@ class Controller(QObject):
             self.mw.pressure_setting_entry.setEnabled(False)
         self.mw.pressure_setting_entry.setText(str(pressure))
 
+    # --- Main Tab Signals ---
+
     @Slot()
     def receive_operate_sig(self, checked: bool) -> None:
         if checked:
             self.ereg.valves_on()
             self.mw.operate_btn.setText('VALVES ACTIVE')
+            if self.mw.pressurize_rb.isChecked():
+                self.mw.sweep_tab.setEnabled(True)
         else:
             self.ereg.valves_off()
             self.mw.operate_btn.setText('VALVES CLOSED')
+            self.mw.sweep_tab.setEnabled(False)
 
     @Slot()
     def receive_pressurize_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
             return
         self.mw.handle_pressure_input()  # set the pressure
+        self.mw.sweep_tab.setEnabled(True)
 
     @Slot()
     def receive_vent_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
             return
         self.ereg.pressure = 0
+        self.mw.sweep_tab.setEnabled(False)
 
     @Slot()
     def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:

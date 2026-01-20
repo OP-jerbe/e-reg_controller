@@ -33,17 +33,17 @@ class PressureSweepWindow(QMainWindow):
         self.resize(250, 100)
 
         # Create validator for ip and port inputs
-        entry_regex = QRegularExpression(r'[0-9.]*')
-        entry_validator = QRegularExpressionValidator(entry_regex)
+        sweep_regex = QRegularExpression(r'[0-9.]*')
+        sweep_validator = QRegularExpressionValidator(sweep_regex)
 
         # Create the widgets
         self.span_label = QLabel('Span (mBar)')
         self.span_entry = QLineEdit('400')
-        self.span_entry.setValidator(entry_validator)
+        self.span_entry.setValidator(sweep_validator)
 
         self.rate_label = QLabel('Rate (mBar/sec)')
         self.rate_entry = QLineEdit('2')
-        self.rate_entry.setValidator(entry_validator)
+        self.rate_entry.setValidator(sweep_validator)
 
         self.h2l_rb = QRadioButton('High-to-Low')
         self.h2l_rb.setChecked(True)
@@ -54,14 +54,14 @@ class PressureSweepWindow(QMainWindow):
         self.rb_group.addButton(self.l2h_rb, 102)
 
         self.start_btn = QPushButton('Start')
-        self.start_btn.clicked.connect(self.handle_start_clicked)
+        self.start_btn.clicked.connect(self.handle_start_sweep_btn_clicked)
         self.start_btn.setAutoDefault(True)
 
         self.stop_btn = QPushButton('Stop')
         self.stop_btn.clicked.connect(self.handle_stop_clicked)
         self.stop_btn.setAutoDefault(True)
 
-        rb_group_box = QGroupBox('Sweep Direction')
+        direction_rb_group_box = QGroupBox('Sweep Direction')
 
         # Set the layout
         label_layout = QHBoxLayout()
@@ -84,12 +84,12 @@ class PressureSweepWindow(QMainWindow):
         rb_group_layout.addLayout(h2l_layout)
         rb_group_layout.addLayout(l2h_layout)
 
-        rb_group_box.setLayout(rb_group_layout)
+        direction_rb_group_box.setLayout(rb_group_layout)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(label_layout)
         main_layout.addLayout(input_layout)
-        main_layout.addWidget(rb_group_box)
+        main_layout.addWidget(direction_rb_group_box)
         main_layout.addWidget(self.start_btn)
         main_layout.addWidget(self.stop_btn)
 
@@ -99,7 +99,7 @@ class PressureSweepWindow(QMainWindow):
         container.setLayout(main_layout)
         self.setCentralWidget(container)
 
-    def handle_start_clicked(self) -> None:
+    def handle_start_sweep_btn_clicked(self) -> None:
         if not self.check_span():
             return
         span = self.span_entry.text()

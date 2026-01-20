@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from qt_material import apply_stylesheet
 
 
 class ReconnectWindow(QMainWindow):
@@ -31,6 +32,10 @@ class ReconnectWindow(QMainWindow):
         # Set the window size
         self.setWindowTitle('Connect to e-Reg')
         self.setFixedSize(300, 130)
+        apply_stylesheet(self, theme='dark_lightgreen.xml', invert_secondary=True)
+        self.setStyleSheet(
+            self.styleSheet() + 'QLineEdit, QTextEdit {color: lightgreen;}'
+        )
 
         # Create validator for ip and port inputs
         ip_regex = QRegularExpression(r'[0-9.]*')
