@@ -201,7 +201,7 @@ class MainWindow(QMainWindow):
         current_pressure: int = int(self.pressure_setting_entry.text())
         pressure_sweep_window = PressureSweepWindow(self, current_pressure)
         pressure_sweep_window.start_sweep_sig.connect(self.receive_start_sweep_sig)
-        pressure_sweep_window.span_error_sig.connect(self.receive_span_error_sig)
+        pressure_sweep_window.span_warning_sig.connect(self.receive_span_warning_sig)
         pressure_sweep_window.show()
 
     @Slot()
@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
         self.start_pressure_sweep_sig.emit(span, rate, direction)
 
     @Slot()
-    def receive_span_error_sig(self, span: int, direction: str) -> None:
+    def receive_span_warning_sig(self, span: int, direction: str) -> None:
         error_text = ''
         match direction:
             case 'H2L':

@@ -154,17 +154,13 @@ class Controller(QObject):
     @Slot()
     def receive_pressurize_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
-            print('operate button not checked')
             return
-        print(f'setting the pressure to {self.mw.pressure_setting_entry.text()}')
         self.mw.handle_pressure_input()  # set the pressure
 
     @Slot()
     def receive_vent_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
-            print('operate button not checked')
             return
-        print('setting the pressure to 0')
         self.ereg.pressure = 0
 
     @Slot()

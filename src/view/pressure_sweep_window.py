@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QRadioButton,
     QVBoxLayout,
@@ -16,7 +17,7 @@ from PySide6.QtWidgets import (
 
 class PressureSweepWindow(QMainWindow):
     start_sweep_sig = Signal(str, str, str)  # span, rate, direction
-    span_error_sig = Signal(int, str)  # span, direction
+    span_warning_sig = Signal(int, str)  # span, direction
 
     def __init__(self, parent: QWidget, current_pressure: int) -> None:
         super().__init__(parent)
@@ -105,12 +106,16 @@ class PressureSweepWindow(QMainWindow):
         span = int(self.span_entry.text())
         match self.rb_group.checkedId():
             case 101:
-                if self.current_pressure - span < 1000:
-                    self.span_error_sig.emit(span, 'H2L')
+                direction = 'H2L'
+                if self.current_pressure - span < 0:
+                    self.span_error_popup(span, direction)
                     return False
+                if self.current_pressure - span < 1000:
+                    return self.low_pressure_warning_popup(span)
             case 102:
+                direction = 'L2H'
                 if self.current_pressure + span > 3033:
-                    self.span_error_sig.emit(span, 'L2H')
+                    self.span_error_popup(span, direction)
                     return False
         return True
 
@@ -127,3 +132,30 @@ class PressureSweepWindow(QMainWindow):
             self.start_sweep_sig.emit(span, rate, direction)
         event.accept()
         super().closeEvent(event)
+
+    def low_pressure_warning_popup(self, span: int) -> bool:
+        window_title = 'Span Warning'
+        warning_message = f'A span of {span} mBar will cause the gas line pressure to fall below 1000 mBar are you sure you want to procede?'
+        reply = QMessageBox.warning(
+            self,
+            window_title,
+            warning_message,
+            buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            defaultButton=QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            return True
+        else:
+            return False
+
+    def span_error_popup(self, span: int, direction: str) -> None:
+        window_title = 'Span Error'
+        error_message = ''
+        match direction:
+            case 'H2L':
+                error_message = f'A span of {span} mBar will attempt to set the gas line pressure below 0 mBar which is not allowed.'
+            case 'L2H':
+                error_message = f'A span of {span} mBar will attempt to set the gas line pressure above 3033 mBar which is not allowed.'
+        _ = QMessageBox.critical(
+            self, window_title, error_message, QMessageBox.StandardButton.Ok
+        )
