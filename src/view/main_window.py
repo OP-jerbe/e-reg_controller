@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
 
         controls_layout = QVBoxLayout(self.controls_frame)
 
-        self.operate_btn = QPushButton('OFF')
+        self.operate_btn = QPushButton('VALVES CLOSED')
         self.operate_btn.setEnabled(False)
         self.operate_btn.setCheckable(True)
         self.operate_btn.setChecked(False)

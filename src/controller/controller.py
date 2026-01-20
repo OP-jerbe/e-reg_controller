@@ -146,10 +146,10 @@ class Controller(QObject):
     def receive_operate_sig(self, checked: bool) -> None:
         if checked:
             self.ereg.valves_on()
-            self.mw.operate_btn.setText('ON')
+            self.mw.operate_btn.setText('VALVES ACTIVE')
         else:
             self.ereg.valves_off()
-            self.mw.operate_btn.setText('OFF')
+            self.mw.operate_btn.setText('VALVES CLOSED')
 
     @Slot()
     def receive_pressurize_sig(self) -> None:
