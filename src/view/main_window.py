@@ -25,6 +25,7 @@ from qt_material import apply_stylesheet
 
 import src.helpers.helpers as h
 from src.model.ereg_driver import eReg
+from src.view.bleed_supply_window import BleedSupplyWindow
 from src.view.reconnect_window import ReconnectWindow
 from src.view.scalable_image_label import ScalableImageLabel
 from src.view.scrolling_line_edit import ScrollingLineEdit
@@ -40,6 +41,8 @@ class MainWindow(QMainWindow):
     bypass_sig = Signal()
     start_pressure_sweep_sig = Signal(str, str, str)
     stop_pressure_sweep_sig = Signal()
+    start_bleed_supply_sig = Signal(int)
+    stop_bleed_supply_sig = Signal()
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -57,19 +60,21 @@ class MainWindow(QMainWindow):
         """
         self.exit_action = QAction(text='Exit', parent=self)
         self.connect_action = QAction(text='Connect', parent=self)
+        self.bleed_supply_action = QAction(text='Bleed Supply', parent=self)
+        self.bleed_supply_action.setCheckable(True)
 
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu('File')
+        self.option_menu = self.menu_bar.addMenu('Option')
         # self.help_menu = self.menu_bar.addMenu('Help')
 
         self.file_menu.addAction(self.connect_action)
         self.file_menu.addAction(self.exit_action)
+        self.option_menu.addAction(self.bleed_supply_action)
 
         self.exit_action.triggered.connect(self.handle_exit_triggered)
         self.connect_action.triggered.connect(self.handle_connect_triggered)
-        # self.pressure_sweep_action.triggered.connect(
-        #     self.handle_pressure_sweep_triggered
-        # )
+        self.bleed_supply_action.triggered.connect(self.handle_bleed_supply_triggered)
 
     def _create_main_tab(self) -> None:
         # --- Logic/Validators ---
@@ -440,6 +445,22 @@ class MainWindow(QMainWindow):
         Closes the `MainWindow`.
         """
         self.close()
+
+    # --- Bleed Supply Option ---
+
+    def handle_bleed_supply_triggered(self) -> None:
+        if not self.bleed_supply_action.isChecked():
+            self.stop_bleed_supply_sig.emit()
+            return
+        bleed_supply_window = BleedSupplyWindow(self)
+        bleed_supply_window.start_bleed_supply_sig.connect(
+            self.receive_start_bleed_supply_sig
+        )
+        bleed_supply_window.show()
+
+    @Slot()
+    def receive_start_bleed_supply_sig(self, rate: int) -> None:
+        self.start_bleed_supply_sig.emit(rate)
 
     # --- Error popup ---
 

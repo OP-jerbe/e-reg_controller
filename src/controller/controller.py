@@ -1,6 +1,7 @@
-from PySide6.QtCore import QObject, QThread, QTimer, Signal, Slot
+from PySide6.QtCore import QObject, QThread, QThreadPool, QTimer, Signal, Slot
 
 import src.helpers.helpers as h
+from src.controller.bleed_worker import BleedWorker
 from src.controller.sweep_worker import SweepWorker
 from src.controller.worker import Worker
 from src.model.ereg_driver import eReg
@@ -17,6 +18,8 @@ class Controller(QObject):
 
         self.worker_thread = QThread()
         self.worker_thread.setObjectName('Pressure Reading')
+
+        self.thread_pool = QThreadPool()
 
         self.timer = QTimer(interval=250)
         self.timer.timeout.connect(self.receive_timeout_sig)
@@ -36,6 +39,8 @@ class Controller(QObject):
         self.mw.bypass_sig.connect(self.receive_bypass_sig)
         self.mw.start_pressure_sweep_sig.connect(self.receive_start_pressure_sweep_sig)
         self.mw.stop_pressure_sweep_sig.connect(self.receive_stop_pressure_sweep_sig)
+        self.mw.start_bleed_supply_sig.connect(self.receive_start_bleed_supply_sig)
+        self.mw.stop_bleed_supply_sig.connect(self.receive_stop_bleed_supply_sig)
 
         if self.ereg.sock:
             self._init_ereg()
@@ -266,7 +271,7 @@ class Controller(QObject):
             )
             self.mw.error_popup(error_msg)
             return
-        p = round(h.convert_mbar_to_psi(p), 2)
+        p = h.convert_mbar_to_psi(p)
         self.ereg.pressure = p
 
     @Slot()
@@ -297,3 +302,35 @@ class Controller(QObject):
         self.timer.stop()
         self.worker_thread.quit()
         self.worker_thread.wait()
+
+    # --- Option Menu Signals ---
+
+    @Slot()
+    def receive_start_bleed_supply_sig(self, rate: int) -> None:
+        interval = int(3.6e6 / rate)  # milliseconds between blips
+        self.bleed_supply_timer = QTimer(interval=interval)
+        self.bleed_supply_timer.timeout.connect(self.handle_bleed_supply_timer_timeout)
+        self.bleed_supply_timer.start()
+
+    @Slot()
+    def handle_bleed_supply_timer_timeout(self) -> None:
+        change = 20  # mBar
+        pressure_setting = int(self.mw.pressure_setting_entry.text())
+        blip_pressure = pressure_setting - change
+        bleed_worker = BleedWorker(
+            fn=self.bleed_supply_line,
+            rtn=False,
+            blip_pressure=blip_pressure,
+            pressure_setting=pressure_setting,
+        )
+        self.thread_pool.start(bleed_worker)
+
+    def bleed_supply_line(self, blip_pressure: int, pressure_setting: int) -> None:
+        self.ereg.pressure = h.convert_mbar_to_psi(blip_pressure)
+        QThread.msleep(20)
+        self.ereg.pressure = h.convert_mbar_to_psi(pressure_setting)
+
+    @Slot()
+    def receive_stop_bleed_supply_sig(self) -> None:
+        self.bleed_supply_timer.stop()
+        self.bleed_supply_timer.deleteLater()
