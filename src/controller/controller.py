@@ -166,6 +166,7 @@ class Controller(QObject):
 
     @Slot()
     def receive_sweep_finished_sig(self) -> None:
+        self.mw.operate_btn.setEnabled(True)
         self.mw.pressure_setting_entry.setEnabled(True)
         self.mw.start_sweep_btn.setEnabled(True)
         self.mw.stop_sweep_btn.setEnabled(False)
