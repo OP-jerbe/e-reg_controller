@@ -84,6 +84,16 @@ class Controller(QObject):
         Stops the timer and shows an popup error message if a communication error occurs.
         """
         self.timer.stop()
+        try:
+            if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
+                if self.sweep_thread.isRunning():
+                    if hasattr(self, 'sweep_worker') and self.sweep_worker:
+                        self.sweep_worker.stop()
+        except RuntimeError:
+            # This catches cases where the C++ object was deleted but reference remained
+            print('whoopsy-daisy')
+            self.sweep_thread = None
+            self.sweep_worker = None
         self.mw.pressure_reading_label.setText('- - - - mBar')
         self.mw.operate_btn.setChecked(False)
         self.mw.operate_btn.setText('DISCONNECTED')
