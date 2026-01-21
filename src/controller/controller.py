@@ -316,11 +316,11 @@ class Controller(QObject):
     def receive_start_bleed_supply_sig(self, rate: int) -> None:
         interval = int(3.6e6 / rate)  # milliseconds between blips
         self.bleed_supply_timer = QTimer(interval=interval)
-        self.bleed_supply_timer.timeout.connect(self.handle_bleed_supply_timer_timeout)
+        self.bleed_supply_timer.timeout.connect(self.receive_bleed_supply_timer_timeout)
         self.bleed_supply_timer.start()
 
     @Slot()
-    def handle_bleed_supply_timer_timeout(self) -> None:
+    def receive_bleed_supply_timer_timeout(self) -> None:
         if not (self.mw.operate_btn.isChecked() and self.mw.pressurize_rb.isChecked()):
             return
         change = 20  # mBar
