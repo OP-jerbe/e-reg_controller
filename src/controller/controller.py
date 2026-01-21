@@ -199,13 +199,14 @@ class Controller(QObject):
         if checked:
             self.ereg.valves_on()
             self.mw.operate_btn.setText('VALVES ACTIVE')
-            if self.mw.pressurize_rb.isChecked():
-                self.mw.sweep_tab.setEnabled(True)
-                self.mw.change_state_image('pressurized')
-            if self.mw.vent_rb.isChecked():
-                self.mw.change_state_image('venting')
-            if self.mw.bypass_rb.isChecked():
-                self.mw.change_state_image('bypassed')
+            match self.mw.operate_rb_group.checkedId():
+                case 101:  # PRESSURIZE
+                    self.mw.sweep_tab.setEnabled(True)
+                    self.mw.change_state_image('pressurized')
+                case 102:  # VENT
+                    self.mw.change_state_image('venting')
+                case 103:  # BYPASS
+                    self.mw.change_state_image('bypassed')
         else:
             self.ereg.valves_off()
             self.mw.operate_btn.setText('VALVES DISABLED')

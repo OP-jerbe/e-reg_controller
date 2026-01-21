@@ -308,11 +308,19 @@ class MainWindow(QMainWindow):
         This method is intended to be connected to the `editingFinished`
         signal of the QLineEdit.
         """
-        old_pressure = self.last_valid_pressure
-        new_pressure = self.pressure_setting_entry.text().strip()
-        self.last_valid_pressure = new_pressure
-        self.pressure_change_sig.emit(new_pressure, old_pressure)
-        self.pressure_setting_entry.clearFocus()
+        if not self.operate_btn.isEnabled():
+            self.pressure_setting_entry.clearFocus()
+            return
+        match self.operate_rb_group.checkedId():
+            case 101:  # PRESSURIZE
+                old_pressure = self.last_valid_pressure
+                new_pressure = self.pressure_setting_entry.text().strip()
+                self.last_valid_pressure = new_pressure
+                self.pressure_change_sig.emit(new_pressure, old_pressure)
+                self.pressure_setting_entry.clearFocus()
+            case _:
+                self.pressure_setting_entry.clearFocus()
+                return
 
     def handle_operate_btn_clicked(self) -> None:
         rb_id: int = self.sweep_rb_group.checkedId()
