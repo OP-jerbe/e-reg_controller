@@ -1,3 +1,5 @@
+from typing import Literal
+
 from PySide6.QtCore import QRegularExpression, Signal, Slot
 from PySide6.QtGui import QAction, QCloseEvent, QRegularExpressionValidator
 from PySide6.QtWidgets import (
@@ -24,6 +26,7 @@ from qt_material import apply_stylesheet
 import src.helpers.helpers as h
 from src.model.ereg_driver import eReg
 from src.view.reconnect_window import ReconnectWindow
+from src.view.scalable_image_label import ScalableImageLabel
 
 
 class MainWindow(QMainWindow):
@@ -76,17 +79,27 @@ class MainWindow(QMainWindow):
         main_tab_layout = QVBoxLayout(self.main_tab)
 
         # --- Controls Section ---
-        self.controls_frame = QFrame()
-        self.controls_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.controls_frame.setLineWidth(2)
-        controls_layout = QVBoxLayout(self.controls_frame)
 
-        self.operate_btn = QPushButton('DISCONNECTED')
+        # Operate Button Section
+        self.operate_btn = QPushButton('DISCONNECTED')  # add to main_tab_layout
         self.operate_btn.setEnabled(False)
         self.operate_btn.setCheckable(True)
-        self.operate_btn.setChecked(False)
         self.operate_btn.clicked.connect(self.handle_operate_btn_clicked)
 
+        # State Image Section
+        self.image_frame = QFrame()  # add to main_tab_layout
+        self.image_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.image_frame.setLineWidth(2)
+        state_img_layout = QVBoxLayout(self.image_frame)
+        state_img_layout.setContentsMargins(0, 0, 0, 0)  # No padding inside the frame
+        state_img_layout.setSpacing(0)
+
+        self.state_img = h.get_state_img('disabled')
+        self.image_label = ScalableImageLabel(self.state_img)
+        self.image_label.setContentsMargins(0, 0, 0, 0)
+        state_img_layout.addWidget(self.image_label)
+
+        # Radio Button Section
         self.operate_rb_group = QButtonGroup()
         self.pressurize_rb = QRadioButton('PRESSURIZE')
         self.pressurize_rb.setChecked(True)
@@ -102,13 +115,14 @@ class MainWindow(QMainWindow):
         vent_h_layout.addWidget(self.vent_rb)
         vent_h_layout.addStretch()
 
-        controls_layout.addWidget(self.operate_btn)
-        controls_layout.addLayout(press_h_layout)
-        controls_layout.addLayout(vent_h_layout)
+        rb_layout = QHBoxLayout()  # add to main_tab_layout
+        rb_layout.addLayout(press_h_layout)
+        rb_layout.addLayout(vent_h_layout)
+
         self.operate_rb_group.idClicked.connect(self.handle_rb_selected)
 
         # --- Pressure Section ---
-        self.pressure_setting_frame = QFrame()
+        self.pressure_setting_frame = QFrame()  # add to main_tab_layout
         self.pressure_setting_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.pressure_setting_frame.setLineWidth(2)
         pressure_layout = QFormLayout(self.pressure_setting_frame)
@@ -123,9 +137,10 @@ class MainWindow(QMainWindow):
         pressure_layout.addRow('Setting:', self.pressure_setting_entry)
 
         # Assemble the Main Tab
-        main_tab_layout.addWidget(self.controls_frame)
-        main_tab_layout.addWidget(self.pressure_setting_frame)
-        main_tab_layout.addStretch()
+        main_tab_layout.addWidget(self.operate_btn, 0)
+        main_tab_layout.addWidget(self.image_frame, 1)
+        main_tab_layout.addLayout(rb_layout, 0)
+        main_tab_layout.addWidget(self.pressure_setting_frame, 0)
 
     def _create_p_sweep_tab(self) -> None:
         # --- Logic/Validators ---
@@ -220,7 +235,7 @@ class MainWindow(QMainWindow):
         ver = h.get_app_version()
         self.setWindowTitle(f'e-Reg Controller v{ver}')
         self.setWindowIcon(h.get_icon())
-        self.resize(350, 100)  # Increased height slightly to accommodate tab bar
+        self.resize(400, 500)  # Increased height slightly to accommodate tab bar
         apply_stylesheet(self, theme='dark_lightgreen.xml', invert_secondary=True)
 
         self.tabs = QTabWidget()
@@ -275,6 +290,13 @@ class MainWindow(QMainWindow):
         rb_id: int = self.sweep_rb_group.checkedId()
         self.operate_sig.emit(self.operate_btn.isChecked())
         self.handle_rb_selected(rb_id)
+
+    def change_state_image(
+        self, state: Literal['disabled', 'pressurized', 'venting']
+    ) -> None:
+        new_img = h.get_state_img(state)
+        self.state_img = new_img
+        self.image_label.update_pixmap(new_img)
 
     # --- Pressure Sweep tab methods ---
 
@@ -374,6 +396,17 @@ class MainWindow(QMainWindow):
         """
         self.close()
 
+    # --- Error popup ---
+
+    def error_popup(self, error: str) -> None:
+        """
+        Displays a popup window with an error message.
+        """
+        error_dialog = QErrorMessage(self)
+        error_dialog.showMessage(error)
+
+    # --- Hidden Events ---
+
     def closeEvent(self, event: QCloseEvent) -> None:
         """
         This method runs when the `MainWindow` is closed.
@@ -384,12 +417,3 @@ class MainWindow(QMainWindow):
         self.closing_sig.emit()
         event.accept()
         super().closeEvent(event)
-
-    # --- Error popup ---
-
-    def error_popup(self, error: str) -> None:
-        """
-        Displays a popup window with an error message.
-        """
-        error_dialog = QErrorMessage(self)
-        error_dialog.showMessage(error)

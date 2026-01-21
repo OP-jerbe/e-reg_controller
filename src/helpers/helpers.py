@@ -2,8 +2,9 @@ import sys
 from configparser import ConfigParser
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from typing import Literal
 
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap
 
 
 def get_app_version() -> str:
@@ -25,6 +26,22 @@ def get_app_version() -> str:
         return version('e_reg_controller')
     except PackageNotFoundError:
         return 'development-build'
+
+
+def get_state_img(state: Literal['disabled', 'pressurized', 'venting']) -> QPixmap:
+    pixmap = QPixmap()
+    root = get_root_dir()
+    match state:
+        case 'disabled':
+            path = str(root / 'assets' / 'e-reg_disabled.png')
+            return QPixmap(path)
+        case 'pressurized':
+            path = str(root / 'assets' / 'e-reg_pressurized.png')
+            return QPixmap(path)
+        case 'venting':
+            path = str(root / 'assets' / 'e-reg_venting.png')
+            return QPixmap(path)
+    return pixmap
 
 
 def get_icon() -> QIcon:

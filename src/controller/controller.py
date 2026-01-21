@@ -46,7 +46,7 @@ class Controller(QObject):
 
     def _init_mw(self) -> None:
         self.mw.operate_btn.setEnabled(True)
-        self.mw.operate_btn.setText('VALVES CLOSED')
+        self.mw.operate_btn.setText('VALVES DISABLED')
 
     ####################################
     ######### Controller Slots #########
@@ -186,10 +186,15 @@ class Controller(QObject):
             self.mw.operate_btn.setText('VALVES ACTIVE')
             if self.mw.pressurize_rb.isChecked():
                 self.mw.sweep_tab.setEnabled(True)
+                self.mw.change_state_image('pressurized')
+            if self.mw.vent_rb.isChecked():
+                self.mw.change_state_image('venting')
+
         else:
             self.ereg.valves_off()
-            self.mw.operate_btn.setText('VALVES CLOSED')
+            self.mw.operate_btn.setText('VALVES DISABLED')
             self.mw.sweep_tab.setEnabled(False)
+            self.mw.change_state_image('disabled')
 
     @Slot()
     def receive_pressurize_sig(self) -> None:
@@ -197,6 +202,7 @@ class Controller(QObject):
             return
         self.mw.handle_pressure_input()  # set the pressure
         self.mw.sweep_tab.setEnabled(True)
+        self.mw.change_state_image('pressurized')
 
     @Slot()
     def receive_vent_sig(self) -> None:
@@ -204,6 +210,7 @@ class Controller(QObject):
             return
         self.ereg.pressure = 0
         self.mw.sweep_tab.setEnabled(False)
+        self.mw.change_state_image('venting')
 
     @Slot()
     def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:
