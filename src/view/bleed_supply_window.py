@@ -27,7 +27,7 @@ class BleedSupplyWindow(QMainWindow):
         self.setFixedSize(300, 130)
         apply_stylesheet(self, theme='dark_lightgreen.xml', invert_secondary=True)
         self.setStyleSheet(
-            self.styleSheet() + 'QLineEdit, QTextEdit {color: lightgreen;}'
+            self.styleSheet() + 'QLineEdit, QTextEdit, QSpinBox {color: lightgreen;}'
         )
 
         # Create the widgets
