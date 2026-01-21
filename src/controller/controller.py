@@ -238,7 +238,7 @@ class Controller(QObject):
     def receive_bypass_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
             return
-        self.ereg.pressure = h.convert_mbar_to_psi(3033)
+        self.ereg.pressure = self.ereg.cal_pressure
         self.mw.sweep_tab.setEnabled(False)
         self.mw.change_state_image('bypassed')
 
@@ -303,7 +303,7 @@ class Controller(QObject):
         self.worker_thread.quit()
         self.worker_thread.wait()
 
-    # --- Option Menu Signals ---
+    # --- Bleed Supply Signals ---
 
     @Slot()
     def receive_start_bleed_supply_sig(self, rate: int) -> None:
