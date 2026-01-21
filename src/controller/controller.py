@@ -33,6 +33,7 @@ class Controller(QObject):
         self.mw.operate_sig.connect(self.receive_operate_sig)
         self.mw.pressurize_sig.connect(self.receive_pressurize_sig)
         self.mw.vent_sig.connect(self.receive_vent_sig)
+        self.mw.bypass_sig.connect(self.receive_bypass_sig)
         self.mw.start_pressure_sweep_sig.connect(self.receive_start_pressure_sweep_sig)
         self.mw.stop_pressure_sweep_sig.connect(self.receive_stop_pressure_sweep_sig)
 
@@ -88,6 +89,7 @@ class Controller(QObject):
         self.mw.operate_btn.setText('DISCONNECTED')
         self.mw.operate_btn.setEnabled(False)
         self.mw.sweep_tab.setEnabled(False)
+        self.mw.change_state_image('disabled')
         self.mw.error_popup(error)
 
     @Slot()
@@ -191,7 +193,8 @@ class Controller(QObject):
                 self.mw.change_state_image('pressurized')
             if self.mw.vent_rb.isChecked():
                 self.mw.change_state_image('venting')
-
+            if self.mw.bypass_rb.isChecked():
+                self.mw.change_state_image('bypassed')
         else:
             self.ereg.valves_off()
             self.mw.operate_btn.setText('VALVES DISABLED')
@@ -213,6 +216,14 @@ class Controller(QObject):
         self.ereg.pressure = 0
         self.mw.sweep_tab.setEnabled(False)
         self.mw.change_state_image('venting')
+
+    @Slot()
+    def receive_bypass_sig(self) -> None:
+        if not self.mw.operate_btn.isChecked():
+            return
+        self.ereg.pressure = h.convert_mbar_to_psi(3033)
+        self.mw.sweep_tab.setEnabled(False)
+        self.mw.change_state_image('bypassed')
 
     @Slot()
     def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:

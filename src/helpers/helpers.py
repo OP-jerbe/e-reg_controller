@@ -28,7 +28,9 @@ def get_app_version() -> str:
         return 'development-build'
 
 
-def get_state_img(state: Literal['disabled', 'pressurized', 'venting']) -> QPixmap:
+def get_state_img(
+    state: Literal['disabled', 'pressurized', 'venting', 'bypassed'],
+) -> QPixmap:
     pixmap = QPixmap()
     root = get_root_dir()
     match state:
@@ -40,6 +42,9 @@ def get_state_img(state: Literal['disabled', 'pressurized', 'venting']) -> QPixm
             return QPixmap(path)
         case 'venting':
             path = str(root / 'assets' / 'e-reg_venting.png')
+            return QPixmap(path)
+        case 'bypassed':
+            path = str(root / 'assets' / 'e-reg_bypassed.png')
             return QPixmap(path)
     return pixmap
 

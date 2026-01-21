@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
     operate_sig = Signal(bool)
     pressurize_sig = Signal()
     vent_sig = Signal()
+    bypass_sig = Signal()
     start_pressure_sweep_sig = Signal(str, str, str)
     stop_pressure_sweep_sig = Signal()
 
@@ -105,8 +106,10 @@ class MainWindow(QMainWindow):
         self.pressurize_rb = QRadioButton('PRESSURIZE')
         self.pressurize_rb.setChecked(True)
         self.vent_rb = QRadioButton('VENT')
+        self.bypass_rb = QRadioButton('BYPASS')
         self.operate_rb_group.addButton(self.pressurize_rb, 101)
         self.operate_rb_group.addButton(self.vent_rb, 102)
+        self.operate_rb_group.addButton(self.bypass_rb, 103)
 
         press_h_layout = QHBoxLayout()
         press_h_layout.addWidget(self.pressurize_rb)
@@ -116,9 +119,14 @@ class MainWindow(QMainWindow):
         vent_h_layout.addWidget(self.vent_rb)
         vent_h_layout.addStretch()
 
+        bypass_h_layout = QHBoxLayout()
+        bypass_h_layout.addWidget(self.bypass_rb)
+        bypass_h_layout.addStretch()
+
         rb_layout = QHBoxLayout()  # add to main_tab_layout
         rb_layout.addLayout(press_h_layout)
         rb_layout.addLayout(vent_h_layout)
+        rb_layout.addLayout(bypass_h_layout)
 
         self.operate_rb_group.idClicked.connect(self.handle_rb_selected)
 
@@ -265,6 +273,8 @@ class MainWindow(QMainWindow):
                 self.pressurize_sig.emit()
             case 102:
                 self.vent_sig.emit()
+            case 103:
+                self.bypass_sig.emit()
 
     def update_pressure_reading(self, pressure: float) -> None:
         """
@@ -301,7 +311,7 @@ class MainWindow(QMainWindow):
         self.handle_rb_selected(rb_id)
 
     def change_state_image(
-        self, state: Literal['disabled', 'pressurized', 'venting']
+        self, state: Literal['disabled', 'pressurized', 'venting', 'bypassed']
     ) -> None:
         new_img = h.get_state_img(state)
         self.state_img = new_img
