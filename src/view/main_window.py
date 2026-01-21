@@ -27,6 +27,7 @@ import src.helpers.helpers as h
 from src.model.ereg_driver import eReg
 from src.view.reconnect_window import ReconnectWindow
 from src.view.scalable_image_label import ScalableImageLabel
+from src.view.scrolling_line_edit import ScrollingLineEdit
 
 
 class MainWindow(QMainWindow):
@@ -129,7 +130,8 @@ class MainWindow(QMainWindow):
         self.pressure_reading_label = QLabel('- - - - mBar')
         self.pressure_reading_label.setStyleSheet('font-size: 24pt;')
         self.pressure_setting_label = QLabel('Setting: ')
-        self.pressure_setting_entry = QLineEdit('0')
+        # self.pressure_setting_entry = QLineEdit('0')
+        self.pressure_setting_entry = ScrollingLineEdit('0')
         self.pressure_setting_entry.setValidator(pressure_setting_validator)
         self.pressure_setting_entry.setPlaceholderText('Enter Pressure...')
         self.pressure_setting_entry.editingFinished.connect(self.handle_pressure_input)
