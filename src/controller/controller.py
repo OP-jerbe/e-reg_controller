@@ -16,6 +16,7 @@ class Controller(QObject):
         self.mw = view
 
         self.worker_thread = QThread()
+        self.worker_thread.setObjectName('Pressure Reading')
 
         self.timer = QTimer(interval=250)
         self.timer.timeout.connect(self.receive_timeout_sig)
@@ -124,6 +125,7 @@ class Controller(QObject):
             self.ereg, current_pressure, int(span), int(rate), direction
         )
         self.sweep_thread = QThread()
+        self.sweep_thread.setObjectName('Sweep')
         self.sweep_worker.moveToThread(self.sweep_thread)
 
         # Stop thread loop

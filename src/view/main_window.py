@@ -1,6 +1,6 @@
 from typing import Literal
 
-from PySide6.QtCore import QRegularExpression, Signal, Slot
+from PySide6.QtCore import QRegularExpression, Qt, Signal, Slot
 from PySide6.QtGui import QAction, QCloseEvent, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QRadioButton,
+    QSizePolicy,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -203,10 +204,16 @@ class MainWindow(QMainWindow):
         self.sweep_start_stop_frame_layout = QVBoxLayout()
 
         self.start_sweep_btn = QPushButton('Start')
+        self.start_sweep_btn.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.start_sweep_btn.clicked.connect(self.handle_start_sweep_btn_clicked)
         self.start_sweep_btn.setAutoDefault(True)
 
         self.stop_sweep_btn = QPushButton('Stop')
+        self.stop_sweep_btn.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.stop_sweep_btn.setEnabled(False)
         self.stop_sweep_btn.clicked.connect(self.handle_stop_sweep_btn_clicked)
         self.stop_sweep_btn.setAutoDefault(True)
@@ -219,12 +226,14 @@ class MainWindow(QMainWindow):
         self.sweep_progress_bar.setRange(0, 100)
         self.sweep_progress_bar.setValue(0)
         self.sweep_progress_bar.setTextVisible(True)
+        self.sweep_progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sweep_progress_bar.setFixedHeight(35)
 
         # Assemble the Pressure Sweep tab
-        self.sweep_tab_layout.addLayout(self.sweep_settings_frame_layout)
-        self.sweep_tab_layout.addWidget(self.direction_rb_group_box)
-        self.sweep_tab_layout.addLayout(self.sweep_start_stop_frame_layout)
-        self.sweep_tab_layout.addWidget(self.sweep_progress_bar)
+        self.sweep_tab_layout.addLayout(self.sweep_settings_frame_layout, 0)
+        self.sweep_tab_layout.addWidget(self.direction_rb_group_box, 0)
+        self.sweep_tab_layout.addLayout(self.sweep_start_stop_frame_layout, 1)
+        self.sweep_tab_layout.addWidget(self.sweep_progress_bar, 0)
 
         # --- 4. Add Tabs to Widget ---
         self.tabs.addTab(self.main_tab, 'Main')
