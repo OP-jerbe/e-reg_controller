@@ -5,7 +5,6 @@ from PySide6.QtGui import QAction, QCloseEvent, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QButtonGroup,
     QErrorMessage,
-    QFormLayout,
     QFrame,
     QGridLayout,
     QGroupBox,
@@ -125,16 +124,19 @@ class MainWindow(QMainWindow):
         self.pressure_setting_frame = QFrame()  # add to main_tab_layout
         self.pressure_setting_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.pressure_setting_frame.setLineWidth(2)
-        pressure_layout = QFormLayout(self.pressure_setting_frame)
+        pressure_layout = QHBoxLayout(self.pressure_setting_frame)
 
         self.pressure_reading_label = QLabel('- - - - mBar')
+        self.pressure_reading_label.setStyleSheet('font-size: 24px;')
+        self.pressure_setting_label = QLabel('Setting: ')
         self.pressure_setting_entry = QLineEdit('0')
         self.pressure_setting_entry.setValidator(pressure_setting_validator)
         self.pressure_setting_entry.setPlaceholderText('Enter Pressure...')
         self.pressure_setting_entry.editingFinished.connect(self.handle_pressure_input)
 
-        pressure_layout.addRow('Pressure:', self.pressure_reading_label)
-        pressure_layout.addRow('Setting:', self.pressure_setting_entry)
+        pressure_layout.addWidget(self.pressure_setting_label)
+        pressure_layout.addWidget(self.pressure_setting_entry)
+        pressure_layout.addWidget(self.pressure_reading_label)
 
         # State Image Section
         self.image_frame = QFrame()  # add to main_tab_layout
