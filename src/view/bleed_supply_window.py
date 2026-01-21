@@ -39,6 +39,8 @@ class BleedSupplyWindow(QMainWindow):
         self.start_btn.clicked.connect(self.handle_connect_clicked)
         self.start_btn.setAutoDefault(True)
 
+        self.rate_sb.editingFinished.connect(self.start_btn.animateClick)
+
         # Set the layout
         main_layout = QVBoxLayout()
         label_layout = QHBoxLayout()
