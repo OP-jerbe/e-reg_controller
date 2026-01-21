@@ -89,19 +89,6 @@ class MainWindow(QMainWindow):
         self.operate_btn.setCheckable(True)
         self.operate_btn.clicked.connect(self.handle_operate_btn_clicked)
 
-        # State Image Section
-        self.image_frame = QFrame()  # add to main_tab_layout
-        self.image_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.image_frame.setLineWidth(2)
-        state_img_layout = QVBoxLayout(self.image_frame)
-        state_img_layout.setContentsMargins(0, 0, 0, 0)  # No padding inside the frame
-        state_img_layout.setSpacing(0)
-
-        self.state_img = h.get_state_img('disabled')
-        self.image_label = ScalableImageLabel(self.state_img)
-        self.image_label.setContentsMargins(0, 0, 0, 0)
-        state_img_layout.addWidget(self.image_label)
-
         # Radio Button Section
         self.operate_rb_group = QButtonGroup()
         self.pressurize_rb = QRadioButton('PRESSURIZE')
@@ -149,11 +136,24 @@ class MainWindow(QMainWindow):
         pressure_layout.addRow('Pressure:', self.pressure_reading_label)
         pressure_layout.addRow('Setting:', self.pressure_setting_entry)
 
+        # State Image Section
+        self.image_frame = QFrame()  # add to main_tab_layout
+        self.image_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.image_frame.setLineWidth(2)
+        state_img_layout = QVBoxLayout(self.image_frame)
+        state_img_layout.setContentsMargins(0, 0, 0, 0)  # No padding inside the frame
+        state_img_layout.setSpacing(0)
+
+        self.state_img = h.get_state_img('disabled')
+        self.image_label = ScalableImageLabel(self.state_img)
+        self.image_label.setContentsMargins(0, 0, 0, 0)
+        state_img_layout.addWidget(self.image_label)
+
         # Assemble the Main Tab
         main_tab_layout.addWidget(self.operate_btn, 0)
-        main_tab_layout.addWidget(self.image_frame, 1)
         main_tab_layout.addLayout(rb_layout, 0)
         main_tab_layout.addWidget(self.pressure_setting_frame, 0)
+        main_tab_layout.addWidget(self.image_frame, 1)
 
     def _create_p_sweep_tab(self) -> None:
         # --- Logic/Validators ---
