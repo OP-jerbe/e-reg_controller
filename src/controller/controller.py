@@ -2,8 +2,8 @@ from PySide6.QtCore import QObject, QThread, QThreadPool, QTimer, Signal, Slot
 
 import src.helpers.helpers as h
 from src.controller.bleed_worker import BleedWorker
+from src.controller.polling_worker import PollingWorker
 from src.controller.sweep_worker import SweepWorker
-from src.controller.worker import Worker
 from src.model.ereg_driver import eReg
 from src.view.main_window import MainWindow
 
@@ -21,14 +21,14 @@ class Controller(QObject):
 
         self.thread_pool = QThreadPool()
 
-        self.timer = QTimer(interval=250)
-        self.timer.timeout.connect(self.receive_timeout_sig)
+        self.polling_timer = QTimer(interval=250)
+        self.polling_timer.timeout.connect(self.receive_polling_timer_timeout_sig)
 
-        self.worker = Worker(self.ereg)
-        self.worker.result_sig.connect(self.receive_result_sig)
-        self.worker.conn_error_sig.connect(self.receive_conn_error_sig)
-        self.worker.unexpected_error_sig.connect(self.receive_unexpected_error)
-        self.worker.moveToThread(self.worker_thread)
+        self.polling_worker = PollingWorker(self.ereg)
+        self.polling_worker.result_sig.connect(self.receive_result_sig)
+        self.polling_worker.conn_error_sig.connect(self.receive_conn_error_sig)
+        self.polling_worker.unexpected_error_sig.connect(self.receive_unexpected_error)
+        self.polling_worker.moveToThread(self.worker_thread)
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.new_address_sig.connect(self.receive_new_address_sig)
@@ -49,7 +49,7 @@ class Controller(QObject):
     def _init_ereg(self) -> None:
         self.ereg.valves_off()
         self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
-        self.timer.start()
+        self.polling_timer.start()
 
     def _init_mw(self) -> None:
         self.mw.operate_btn.setEnabled(True)
@@ -60,13 +60,13 @@ class Controller(QObject):
     ####################################
 
     @Slot()
-    def receive_timeout_sig(self) -> None:
+    def receive_polling_timer_timeout_sig(self) -> None:
         """
         Signal received from `self.timer`
 
         Tells the `Worker` class to execute the `doWork()` method.
         """
-        self.worker.doWork()
+        self.polling_worker.doWork()
 
     ####################################
     ########## Worker Slots ############
@@ -88,7 +88,7 @@ class Controller(QObject):
 
         Stops the timer and shows an popup error message if a communication error occurs.
         """
-        self.timer.stop()
+        self.polling_timer.stop()
         try:
             if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
                 if self.sweep_thread.isRunning():
@@ -114,7 +114,7 @@ class Controller(QObject):
 
         Stops the timer and shows an popup error message if an unexpected error occurs.
         """
-        self.timer.stop()
+        self.polling_timer.stop()
         self.mw.pressure_reading_label.setText('---- mBar')
         self.mw.error_popup(error)
 
@@ -299,7 +299,7 @@ class Controller(QObject):
 
         Stops the timer and kills the background thread when the main window is closed.
         """
-        self.timer.stop()
+        self.polling_timer.stop()
         self.worker_thread.quit()
         self.worker_thread.wait()
 

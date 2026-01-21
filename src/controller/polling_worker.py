@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, Signal
 from src.model.ereg_driver import eReg
 
 
-class Worker(QObject):
+class PollingWorker(QObject):
     result_sig = Signal(float)
     conn_error_sig = Signal(str)
     unexpected_error_sig = Signal(str)
