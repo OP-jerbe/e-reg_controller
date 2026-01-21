@@ -207,10 +207,13 @@ class Controller(QObject):
             match self.mw.operate_rb_group.checkedId():
                 case 101:  # PRESSURIZE
                     self.mw.sweep_tab.setEnabled(True)
+                    self.mw.pressurize_sig.emit()
                     self.mw.change_state_image('pressurized')
                 case 102:  # VENT
+                    self.mw.vent_sig.emit()
                     self.mw.change_state_image('venting')
                 case 103:  # BYPASS
+                    self.mw.bypass_sig.emit()
                     self.mw.change_state_image('bypassed')
         else:
             self.ereg.valves_off()
@@ -271,6 +274,10 @@ class Controller(QObject):
             )
             self.mw.error_popup(error_msg)
             return
+
+        if not self.mw.operate_btn.isChecked():
+            return
+
         p = h.convert_mbar_to_psi(p)
         self.ereg.pressure = p
 
