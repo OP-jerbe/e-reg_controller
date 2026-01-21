@@ -127,7 +127,7 @@ class MainWindow(QMainWindow):
         pressure_layout = QHBoxLayout(self.pressure_setting_frame)
 
         self.pressure_reading_label = QLabel('- - - - mBar')
-        self.pressure_reading_label.setStyleSheet('font-size: 30px;')
+        self.pressure_reading_label.setStyleSheet('font-size: 24pt;')
         self.pressure_setting_label = QLabel('Setting: ')
         self.pressure_setting_entry = QLineEdit('0')
         self.pressure_setting_entry.setValidator(pressure_setting_validator)
