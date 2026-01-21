@@ -335,11 +335,14 @@ class Controller(QObject):
         self.thread_pool.start(bleed_worker)
 
     def bleed_supply_line(self, blip_pressure: int, pressure_setting: int) -> None:
+        self.mw.change_state_image('venting')
         self.ereg.pressure = h.convert_mbar_to_psi(blip_pressure)
         QThread.msleep(20)
         self.ereg.pressure = h.convert_mbar_to_psi(pressure_setting)
+        self.mw.change_state_image('pressurized')
 
     @Slot()
     def receive_stop_bleed_supply_sig(self) -> None:
+        self.mw.change_state_image('pressurized')
         self.bleed_supply_timer.stop()
         self.bleed_supply_timer.deleteLater()
