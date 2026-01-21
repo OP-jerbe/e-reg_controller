@@ -321,6 +321,8 @@ class Controller(QObject):
 
     @Slot()
     def handle_bleed_supply_timer_timeout(self) -> None:
+        if not (self.mw.operate_btn.isChecked() and self.mw.pressurize_rb.isChecked()):
+            return
         change = 20  # mBar
         pressure_setting = int(self.mw.pressure_setting_entry.text())
         blip_pressure = pressure_setting - change
