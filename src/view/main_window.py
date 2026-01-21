@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
 
         # Operate Button Section
         self.operate_btn = QPushButton('DISCONNECTED')  # add to main_tab_layout
+        self.operate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.operate_btn.setEnabled(False)
         self.operate_btn.setCheckable(True)
         self.operate_btn.clicked.connect(self.handle_operate_btn_clicked)
@@ -105,8 +106,11 @@ class MainWindow(QMainWindow):
         self.operate_rb_group = QButtonGroup()
         self.pressurize_rb = QRadioButton('PRESSURIZE')
         self.pressurize_rb.setChecked(True)
+        self.pressurize_rb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.vent_rb = QRadioButton('VENT')
+        self.vent_rb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.bypass_rb = QRadioButton('BYPASS')
+        self.bypass_rb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.operate_rb_group.addButton(self.pressurize_rb, 101)
         self.operate_rb_group.addButton(self.vent_rb, 102)
         self.operate_rb_group.addButton(self.bypass_rb, 103)
@@ -184,8 +188,11 @@ class MainWindow(QMainWindow):
         self.direction_rb_group_box = QGroupBox('Sweep Direction')
 
         self.h2l_rb = QRadioButton('High-to-Low')
+        self.h2l_rb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.h2l_rb.setChecked(True)
+
         self.l2h_rb = QRadioButton('Low-to-High')
+        self.l2h_rb.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.sweep_rb_group = QButtonGroup()
         self.sweep_rb_group.addButton(self.h2l_rb, 201)
@@ -212,6 +219,7 @@ class MainWindow(QMainWindow):
         self.sweep_start_stop_frame_layout = QVBoxLayout()
 
         self.start_sweep_btn = QPushButton('Start')
+        self.start_sweep_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_sweep_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -219,6 +227,7 @@ class MainWindow(QMainWindow):
         self.start_sweep_btn.setAutoDefault(True)
 
         self.stop_sweep_btn = QPushButton('Stop')
+        self.stop_sweep_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.stop_sweep_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
