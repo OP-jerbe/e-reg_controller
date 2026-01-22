@@ -270,7 +270,6 @@ class Controller(QObject):
 
     @Slot()
     def receive_purge_stop_sig(self) -> None:
-        print('received purge stop sig')
         self.purge_timer.stop()
         match self.mw.operate_rb_group.checkedId():
             case 101:
