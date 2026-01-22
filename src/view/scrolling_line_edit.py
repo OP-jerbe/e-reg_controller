@@ -34,14 +34,14 @@ class ScrollingLineEdit(QLineEdit):
         else:
             new_val = current_val - magnitude
 
-        # 3. Apply bounds (matching your regex 0-9999)
+        # 3. Apply bounds
         new_val = max(0, min(3033, new_val))
 
         # 4. Update text and maintain cursor position
         self.setText(str(new_val))
         self.setCursorPosition(pos)
 
-        # Trigger the editingFinished signal manually so your logic updates
+        # Trigger the editingFinished signal manually so logic updates
         self.editingFinished.emit()
 
         event.accept()
