@@ -43,6 +43,8 @@ class MainWindow(QMainWindow):
     stop_pressure_sweep_sig = Signal()
     start_bleed_supply_sig = Signal(int)
     stop_bleed_supply_sig = Signal()
+    purge_start_sig = Signal()
+    purge_stop_sig = Signal()
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
@@ -107,6 +109,12 @@ class MainWindow(QMainWindow):
         self.operate_rb_group.addButton(self.vent_rb, 102)
         self.operate_rb_group.addButton(self.bypass_rb, 103)
 
+        self.purge_btn = QPushButton('PURGE')
+        self.purge_btn.setEnabled(False)
+        self.purge_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.purge_btn.pressed.connect(self.handle_purge_btn_pressed)
+        self.purge_btn.released.connect(self.handle_purge_btn_released)
+
         press_h_layout = QHBoxLayout()
         press_h_layout.addWidget(self.pressurize_rb)
         press_h_layout.addStretch()
@@ -123,6 +131,7 @@ class MainWindow(QMainWindow):
         rb_layout.addLayout(press_h_layout)
         rb_layout.addLayout(vent_h_layout)
         rb_layout.addLayout(bypass_h_layout)
+        rb_layout.addWidget(self.purge_btn)
 
         self.operate_rb_group.idClicked.connect(self.handle_rb_selected)
 
@@ -335,6 +344,14 @@ class MainWindow(QMainWindow):
         self.operate_sig.emit(self.operate_btn.isChecked())
         self.handle_rb_selected(rb_id)
 
+    def handle_purge_btn_pressed(self) -> None:
+        if self.operate_btn.isChecked():
+            self.purge_start_sig.emit()
+
+    def handle_purge_btn_released(self) -> None:
+        if self.operate_btn.isChecked():
+            self.purge_stop_sig.emit()
+
     def change_state_image(
         self, state: Literal['disabled', 'pressurized', 'venting', 'bypassed']
     ) -> None:
@@ -376,6 +393,7 @@ class MainWindow(QMainWindow):
         self.operate_btn.setEnabled(False)
         self.start_sweep_btn.setEnabled(False)
         self.stop_sweep_btn.setEnabled(True)
+        self.purge_btn.setEnabled(False)
         for rb in self.operate_rb_group.buttons():
             rb.setEnabled(False)
         self.start_pressure_sweep_sig.emit(span, rate, direction)
@@ -386,6 +404,7 @@ class MainWindow(QMainWindow):
         for rb in self.operate_rb_group.buttons():
             rb.setEnabled(True)
         self.operate_btn.setEnabled(True)
+        self.purge_btn.setEnabled(True)
         self.stop_pressure_sweep_sig.emit()
 
     def low_pressure_warning_popup(self, span: int) -> bool:

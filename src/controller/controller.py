@@ -27,6 +27,9 @@ class Controller(QObject):
         self.bleed_supply_timer = QTimer()
         self.bleed_supply_timer.timeout.connect(self.receive_bleed_supply_timer_timeout)
 
+        self.purge_timer = QTimer(interval=500)
+        self.purge_timer.timeout.connect(self.start_purging)
+
         self.polling_worker = PollingWorker(self.ereg)
         self.polling_worker.result_sig.connect(self.receive_result_sig)
         self.polling_worker.conn_error_sig.connect(self.receive_conn_error_sig)
@@ -44,6 +47,8 @@ class Controller(QObject):
         self.mw.stop_pressure_sweep_sig.connect(self.receive_stop_pressure_sweep_sig)
         self.mw.start_bleed_supply_sig.connect(self.receive_start_bleed_supply_sig)
         self.mw.stop_bleed_supply_sig.connect(self.receive_stop_bleed_supply_sig)
+        self.mw.purge_start_sig.connect(self.receive_purge_start_sig)
+        self.mw.purge_stop_sig.connect(self.receive_purge_stop_sig)
 
         if self.ereg.sock:
             self._init_ereg()
@@ -57,6 +62,7 @@ class Controller(QObject):
     def _init_mw(self) -> None:
         self.mw.operate_btn.setEnabled(True)
         self.mw.operate_btn.setText('VALVES DISABLED')
+        self.mw.purge_btn.setEnabled(True)
 
     ####################################
     ######### Controller Slots #########
@@ -72,7 +78,7 @@ class Controller(QObject):
         self.polling_worker.doWork()
 
     ####################################
-    ########## Worker Slots ############
+    ####### Polling Worker Slots #######
     ####################################
 
     @Slot()
@@ -106,6 +112,7 @@ class Controller(QObject):
         self.mw.operate_btn.setChecked(False)
         self.mw.operate_btn.setText('DISCONNECTED')
         self.mw.operate_btn.setEnabled(False)
+        self.mw.purge_btn.setEnabled(False)
         self.mw.sweep_tab.setEnabled(False)
         self.mw.change_state_image('disabled')
         self.mw.error_popup(error)
@@ -126,6 +133,7 @@ class Controller(QObject):
     ####################################
 
     # --- Pressure Sweep Tab Signals ---
+
     @Slot()
     def receive_start_pressure_sweep_sig(
         self, span: str, rate: str, direction: str
@@ -247,6 +255,30 @@ class Controller(QObject):
         self.ereg.pressure = self.ereg.cal_pressure
         self.mw.sweep_tab.setEnabled(False)
         self.mw.change_state_image('bypassed')
+
+    @Slot()
+    def receive_purge_start_sig(self) -> None:
+        self.purge_timer.start()
+        self.purge_count = 0
+
+    def start_purging(self) -> None:
+        if self.purge_count % 2 == 0:
+            self.mw.vent_sig.emit()
+        else:
+            self.mw.bypass_sig.emit()
+        self.purge_count += 1
+
+    @Slot()
+    def receive_purge_stop_sig(self) -> None:
+        print('received purge stop sig')
+        self.purge_timer.stop()
+        match self.mw.operate_rb_group.checkedId():
+            case 101:
+                self.mw.pressurize_sig.emit()
+            case 102:
+                self.mw.vent_sig.emit()
+            case 103:
+                self.mw.bypass_sig.emit()
 
     @Slot()
     def receive_pressure_change_sig(self, new_pressure: str, old_pressure: str) -> None:
