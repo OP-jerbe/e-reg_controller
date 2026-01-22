@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, QThread, QThreadPool, QTimer, Signal, Slot
+from PySide6.QtCore import QObject, QThread, QThreadPool, QTimer, Slot
 
 import src.helpers.helpers as h
 from src.controller.bleed_worker import BleedWorker
@@ -9,8 +9,6 @@ from src.view.main_window import MainWindow
 
 
 class Controller(QObject):
-    pressure_sig = Signal(float)
-
     def __init__(self, model: eReg, view: MainWindow) -> None:
         super().__init__()
         self.ereg = model
