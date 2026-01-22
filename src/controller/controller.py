@@ -24,6 +24,9 @@ class Controller(QObject):
         self.polling_timer = QTimer(interval=250)
         self.polling_timer.timeout.connect(self.receive_polling_timer_timeout_sig)
 
+        self.bleed_supply_timer = QTimer()
+        self.bleed_supply_timer.timeout.connect(self.receive_bleed_supply_timer_timeout)
+
         self.polling_worker = PollingWorker(self.ereg)
         self.polling_worker.result_sig.connect(self.receive_result_sig)
         self.polling_worker.conn_error_sig.connect(self.receive_conn_error_sig)
@@ -315,8 +318,7 @@ class Controller(QObject):
     @Slot()
     def receive_start_bleed_supply_sig(self, rate: int) -> None:
         interval = int(3.6e6 / rate)  # milliseconds between blips
-        self.bleed_supply_timer = QTimer(interval=interval)
-        self.bleed_supply_timer.timeout.connect(self.receive_bleed_supply_timer_timeout)
+        self.bleed_supply_timer.setInterval(interval)
         self.bleed_supply_timer.start()
 
     @Slot()
