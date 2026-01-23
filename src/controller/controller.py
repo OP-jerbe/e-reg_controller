@@ -195,6 +195,8 @@ class Controller(QObject):
         self.mw.pressure_setting_entry.setEnabled(True)
         self.mw.start_sweep_btn.setEnabled(True)
         self.mw.stop_sweep_btn.setEnabled(False)
+        for rb in self.mw.operate_rb_group.buttons():
+            rb.setEnabled(True)
         self.mw.sweep_progress_bar.setValue(0)
 
     @Slot()
@@ -377,4 +379,3 @@ class Controller(QObject):
     def receive_stop_bleed_supply_sig(self) -> None:
         self.mw.change_state_image('pressurized')
         self.bleed_supply_timer.stop()
-        self.bleed_supply_timer.deleteLater()
