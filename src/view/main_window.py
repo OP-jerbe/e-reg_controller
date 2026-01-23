@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
     bypass_sig = Signal()
     start_pressure_sweep_sig = Signal(str, str, str)
     stop_pressure_sweep_sig = Signal()
+    ext_sweep_sig = Signal(int)
     start_bleed_supply_sig = Signal(int)
     stop_bleed_supply_sig = Signal()
     purge_start_sig = Signal()
@@ -235,6 +236,11 @@ class MainWindow(QMainWindow):
         self.sweep_start_stop_frame.setLineWidth(2)
         self.sweep_start_stop_frame_layout = QVBoxLayout()
 
+        self.ext_sweep_btn = QPushButton('Add 50 to span')
+        self.ext_sweep_btn.setEnabled(False)
+        self.ext_sweep_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.ext_sweep_btn.clicked.connect(self.handle_ext_sweep_btn_clicked)
+
         self.start_sweep_btn = QPushButton('Start')
         self.start_sweep_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_sweep_btn.setSizePolicy(
@@ -252,6 +258,7 @@ class MainWindow(QMainWindow):
         self.stop_sweep_btn.clicked.connect(self.handle_stop_sweep_btn_clicked)
         self.stop_sweep_btn.setAutoDefault(True)
 
+        self.sweep_start_stop_frame_layout.addWidget(self.ext_sweep_btn)
         self.sweep_start_stop_frame_layout.addWidget(self.start_sweep_btn)
         self.sweep_start_stop_frame_layout.addWidget(self.stop_sweep_btn)
 
@@ -394,6 +401,7 @@ class MainWindow(QMainWindow):
         self.start_sweep_btn.setEnabled(False)
         self.stop_sweep_btn.setEnabled(True)
         self.purge_btn.setEnabled(False)
+        self.ext_sweep_btn.setEnabled(True)
         for rb in self.operate_rb_group.buttons():
             rb.setEnabled(False)
         self.start_pressure_sweep_sig.emit(span, rate, direction)
@@ -401,11 +409,15 @@ class MainWindow(QMainWindow):
     def handle_stop_sweep_btn_clicked(self) -> None:
         self.start_sweep_btn.setEnabled(True)
         self.stop_sweep_btn.setEnabled(False)
+        self.ext_sweep_btn.setEnabled(False)
         for rb in self.operate_rb_group.buttons():
             rb.setEnabled(True)
         self.operate_btn.setEnabled(True)
         self.purge_btn.setEnabled(True)
         self.stop_pressure_sweep_sig.emit()
+
+    def handle_ext_sweep_btn_clicked(self) -> None:
+        self.ext_sweep_sig.emit(50)
 
     def low_pressure_warning_popup(self, span: int) -> bool:
         window_title = 'Span Warning'

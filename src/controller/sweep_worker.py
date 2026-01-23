@@ -15,6 +15,7 @@ class SweepWorker(QObject):
     ) -> None:
         super().__init__()
         self.ereg = model
+        self.starting_pressure = starting_pressure
         self.current_pressure = starting_pressure
         self.target_count = span
         self.steps_taken = 0

@@ -43,6 +43,7 @@ class Controller(QObject):
         self.mw.bypass_sig.connect(self.receive_bypass_sig)
         self.mw.start_pressure_sweep_sig.connect(self.receive_start_pressure_sweep_sig)
         self.mw.stop_pressure_sweep_sig.connect(self.receive_stop_pressure_sweep_sig)
+        self.mw.ext_sweep_sig.connect(self.receive_ext_sweep_sig)
         self.mw.start_bleed_supply_sig.connect(self.receive_start_bleed_supply_sig)
         self.mw.stop_bleed_supply_sig.connect(self.receive_stop_bleed_supply_sig)
         self.mw.purge_start_sig.connect(self.receive_purge_start_sig)
@@ -185,6 +186,50 @@ class Controller(QObject):
             self.sweep_worker = None
 
     @Slot()
+    def receive_ext_sweep_sig(self, value: int) -> None:
+        # span entry
+        direction_val = 0
+        starting_p_setting = 0
+
+        if self.sweep_worker:
+            direction_val = self.sweep_worker.direction_val
+            starting_p_setting = self.sweep_worker.starting_pressure
+
+        current_span = int(self.mw.span_entry.text())
+        # starting_target = starting_p_setting + (current_span * direction_val)
+
+        new_span = current_span + value
+        attempted_target = starting_p_setting + (new_span * direction_val)
+
+        if attempted_target > 3033:
+            # self.mw.span_error_popup(new_span, 'L2H')
+            self.mw.ext_sweep_btn.setEnabled(False)
+            new_span = 3033 - starting_p_setting
+            value = new_span - current_span
+            print(f'{new_span = }')
+            print(f'{value = }')
+        if attempted_target < 1000 and direction_val == -1:
+            reply = self.mw.low_pressure_warning_popup(new_span)
+            if not reply:
+                return
+        if attempted_target < 0:
+            new_span = starting_p_setting
+            self.mw.ext_sweep_btn.setEnabled(False)  # cannot go below 0
+            value = value + attempted_target
+
+        self.mw.span_entry.setText(str(new_span))
+
+        # progress bar
+        new_max = self.mw.sweep_progress_bar.maximum() + value
+        self.mw.sweep_progress_bar.setMaximum(new_max)
+
+        # sweep worker
+        if self.sweep_worker:
+            current_target = self.sweep_worker.target_count
+            new_target = current_target + value
+            self.sweep_worker.target_count = new_target
+
+    @Slot()
     def receive_sweep_started_sig(self, maximum_steps: int) -> None:
         self.mw.sweep_progress_bar.setMaximum(maximum_steps)
 
@@ -195,6 +240,7 @@ class Controller(QObject):
         self.mw.pressure_setting_entry.setEnabled(True)
         self.mw.start_sweep_btn.setEnabled(True)
         self.mw.stop_sweep_btn.setEnabled(False)
+        self.mw.ext_sweep_btn.setEnabled(False)
         for rb in self.mw.operate_rb_group.buttons():
             rb.setEnabled(True)
         self.mw.sweep_progress_bar.setValue(0)
