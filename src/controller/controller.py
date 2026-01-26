@@ -404,8 +404,7 @@ class Controller(QObject):
     # --- Plot Pressure Sweep ---
 
     def save_sweep_times(self, start_time: str, stop_time: str, direction: str) -> None:
-        filename = 'history.json'
-        filepath: Path = h.get_root_dir() / 'data_cache' / filename
+        filepath: Path = h.get_root_dir() / 'data_cache' / 'history.json'
         new_entry: dict[str, str] = {
             'start': start_time,
             'stop': stop_time,
