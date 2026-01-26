@@ -328,7 +328,7 @@ class MainWindow(QMainWindow):
         group = QActionGroup(self)
 
         for index, d in enumerate(raw_data):
-            label = f'[{d["start"].split(" ")[0]}] {d["start"].split(" ", 1)[1]}'
+            label = f'[{d["start"].split(" ")[0]}] {d["start"].split(" ", 1)[1]} - {d["stop"].split(" ", 1)[1]}'
             action = QAction(label, self)
             action.setData(index)
             group.addAction(action)
