@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import QFileDialog
 
 
 def get_app_version() -> str:
@@ -198,6 +199,35 @@ def get_json_data() -> list[dict[str, str]]:
     with open(filepath, 'r') as f:
         data: list[dict[str, str]] = json.load(f)
     return data
+
+
+def select_file(default_dir: str | None = None) -> str:
+    filepath: str
+    if not default_dir:
+        default_dir = ''
+    filepath, _ = QFileDialog.getOpenFileName(
+        parent=None, caption='Choose File', dir=default_dir
+    )
+    return filepath
+
+
+def select_folder(default_dir: str | None = None) -> str:
+    """
+    Open a file dialog to select a folder.
+
+    Returns:
+        str: The path to the selected folder. If the dialog is cancelled,
+             an empty string is returned.
+    """
+    if not default_dir:
+        default_dir = ''
+    folder_path: str = QFileDialog.getExistingDirectory(
+        parent=None,
+        caption='Choose Folder',
+        dir=default_dir,
+        options=QFileDialog.Option.ShowDirsOnly,
+    )
+    return folder_path
 
 
 if __name__ == '__main__':

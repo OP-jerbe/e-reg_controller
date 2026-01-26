@@ -1,5 +1,6 @@
 from typing import Literal
 
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from PySide6.QtCore import QRegularExpression, Qt, Signal, Slot
 from PySide6.QtGui import (
     QAction,
@@ -32,6 +33,7 @@ from qt_material import apply_stylesheet
 import src.helpers.helpers as h
 from src.model.ereg_driver import eReg
 from src.view.bleed_supply_window import BleedSupplyWindow
+from src.view.plot_window import PlotWindow
 from src.view.reconnect_window import ReconnectWindow
 from src.view.scalable_image_label import ScalableImageLabel
 from src.view.scrolling_line_edit import ScrollingLineEdit
@@ -320,7 +322,20 @@ class MainWindow(QMainWindow):
     def handle_sweep_selection(self, action: QAction) -> None:
         i = action.data()
         sweep = h.get_json_data()[i]
-        print(f'User selected: {sweep}')
+        filepath = h.select_file()
+        if not filepath:
+            return
+        try:
+            fig = PlotWindow.create_fig(
+                filepath, sweep['start'], sweep['stop'], sweep['direction']
+            )
+        except Exception as e:
+            error_message = f'Could not generate plot. Make sure you have selected the correct csv file. [Error: {str(e)}]'
+            self.error_popup(error_message)
+            return
+        fig_canvas = FigureCanvas(fig)
+        plot_window = PlotWindow(self, fig_canvas)
+        plot_window.show()
 
     def _refresh_sweep_menu(self) -> None:
         raw_data = h.get_json_data()
