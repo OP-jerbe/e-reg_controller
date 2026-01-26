@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QThread, QThreadPool, QTimer, Slot
@@ -20,10 +21,16 @@ class Controller(QObject):
         self.worker_thread = QThread()
         self.worker_thread.setObjectName('Pressure Reading')
 
-        self.thread_pool = QThreadPool()
-
         self.polling_timer = QTimer(interval=250)
         self.polling_timer.timeout.connect(self.receive_polling_timer_timeout_sig)
+
+        self.polling_worker = PollingWorker(self.ereg)
+        self.polling_worker.result_sig.connect(self.receive_result_sig)
+        self.polling_worker.conn_error_sig.connect(self.receive_conn_error_sig)
+        self.polling_worker.unexpected_error_sig.connect(self.receive_unexpected_error)
+        self.polling_worker.moveToThread(self.worker_thread)
+
+        self.thread_pool = QThreadPool()
 
         self.bleed_supply_timer = QTimer()
         self.bleed_supply_timer.timeout.connect(self.receive_bleed_supply_timer_timeout)
@@ -31,11 +38,9 @@ class Controller(QObject):
         self.purge_timer = QTimer(interval=500)
         self.purge_timer.timeout.connect(self.start_purging)
 
-        self.polling_worker = PollingWorker(self.ereg)
-        self.polling_worker.result_sig.connect(self.receive_result_sig)
-        self.polling_worker.conn_error_sig.connect(self.receive_conn_error_sig)
-        self.polling_worker.unexpected_error_sig.connect(self.receive_unexpected_error)
-        self.polling_worker.moveToThread(self.worker_thread)
+        self.sweep_start_time = ''
+        self.sweep_stop_time = ''
+        self.sweep_direction = ''
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
         self.mw.try_to_connect_sig.connect(self.receive_try_to_connect_sig)
@@ -131,6 +136,7 @@ class Controller(QObject):
         # Set the UI for pressure sweep
         self.mw.set_pressure_sweep_state()
 
+        self.sweep_direction = direction
         current_pressure = int(self.mw.pressure_setting_entry.text())
         self.sweep_worker = SweepWorker(
             self.ereg, current_pressure, int(span), int(rate), direction
@@ -213,12 +219,17 @@ class Controller(QObject):
 
     @Slot()
     def receive_sweep_started_sig(self, maximum_steps: int) -> None:
+        self.sweep_start_time: str = datetime.now().strftime('%#m/%#d/%Y %#I:%M:%S %p')
         self.mw.sweep_progress_bar.setMaximum(maximum_steps)
 
     @Slot()
     def receive_sweep_finished_sig(self) -> None:
+        self.sweep_stop_time: str = datetime.now().strftime('%#m/%#d/%Y %#I:%M:%S %p')
         self.mw.set_valves_active_state()
         self.mw.sweep_progress_bar.setValue(0)
+        self.save_sweep_times(
+            self.sweep_start_time, self.sweep_stop_time, self.sweep_direction
+        )
 
     @Slot()
     def receive_current_pressure_sig(self, pressure: int) -> None:
@@ -392,10 +403,14 @@ class Controller(QObject):
 
     # --- Plot Pressure Sweep ---
 
-    def save_sweep_times(self, start_time: str, stop_time: str) -> None:
+    def save_sweep_times(self, start_time: str, stop_time: str, direction: str) -> None:
         filename = 'history.json'
-        filepath: Path = h.get_root_dir() / filename
-        new_entry: dict[str, str] = {'start': start_time, 'stop': stop_time}
+        filepath: Path = h.get_root_dir() / 'data_cache' / filename
+        new_entry: dict[str, str] = {
+            'start': start_time,
+            'stop': stop_time,
+            'direction': direction,
+        }
 
         # 1. Load existing data or start a new list
         if Path(filepath).exists():
@@ -414,5 +429,5 @@ class Controller(QObject):
         data = data[:5]
 
         # 4. Save the updated list back to the file
-        with open(filename, 'w') as file:
+        with open(filepath, 'w') as file:
             json.dump(data, file, indent=4)
