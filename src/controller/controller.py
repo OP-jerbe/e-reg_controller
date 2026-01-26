@@ -194,21 +194,22 @@ class Controller(QObject):
         if self.sweep_worker:
             direction_val = self.sweep_worker.direction_val
             starting_p_setting = self.sweep_worker.starting_pressure
+        print(f'{direction_val = }')
 
         current_span = int(self.mw.span_entry.text())
-        # starting_target = starting_p_setting + (current_span * direction_val)
+        starting_target = starting_p_setting + (current_span * direction_val)
+        print(f'{starting_target = }')
 
         new_span = current_span + value
         attempted_target = starting_p_setting + (new_span * direction_val)
+        print(f'{attempted_target = }')
 
         if attempted_target > 3033:
             # self.mw.span_error_popup(new_span, 'L2H')
             self.mw.ext_sweep_btn.setEnabled(False)
             new_span = 3033 - starting_p_setting
             value = new_span - current_span
-            print(f'{new_span = }')
-            print(f'{value = }')
-        if attempted_target < 1000 and direction_val == -1:
+        if starting_target >= 1000 and attempted_target < 1000 and direction_val == -1:
             reply = self.mw.low_pressure_warning_popup(new_span)
             if not reply:
                 return
