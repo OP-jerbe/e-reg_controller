@@ -1,7 +1,12 @@
 from typing import Literal
 
 from PySide6.QtCore import QRegularExpression, Qt, Signal, Slot
-from PySide6.QtGui import QAction, QCloseEvent, QRegularExpressionValidator
+from PySide6.QtGui import (
+    QAction,
+    QActionGroup,
+    QCloseEvent,
+    QRegularExpressionValidator,
+)
 from PySide6.QtWidgets import (
     QButtonGroup,
     QErrorMessage,
@@ -12,6 +17,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -46,11 +52,13 @@ class MainWindow(QMainWindow):
     stop_bleed_supply_sig = Signal()
     purge_start_sig = Signal()
     purge_stop_sig = Signal()
+    plot_sweep_sig = Signal(dict)
 
     def __init__(self, model: eReg) -> None:
         super().__init__()
         self.ereg = model
         self.last_valid_pressure = ''
+        self.sweep_list = self.get_sweeps_for_menu()
         self._create_gui()
 
     # --- GUI creation methods ---
@@ -66,14 +74,17 @@ class MainWindow(QMainWindow):
         self.bleed_supply_action = QAction(text='Bleed Supply', parent=self)
         self.bleed_supply_action.setCheckable(True)
 
+        self.plot_sweep_submenu = QMenu('Plot Sweep', self)
+        self.plot_sweep_submenu.aboutToShow.connect(self._refresh_sweep_menu)
+
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu('File')
-        self.option_menu = self.menu_bar.addMenu('Option')
-        # self.help_menu = self.menu_bar.addMenu('Help')
+        self.options_menu = self.menu_bar.addMenu('Options')
+        self.options_menu.addMenu(self.plot_sweep_submenu)
 
         self.file_menu.addAction(self.connect_action)
         self.file_menu.addAction(self.exit_action)
-        self.option_menu.addAction(self.bleed_supply_action)
+        self.options_menu.addAction(self.bleed_supply_action)
 
         self.exit_action.triggered.connect(self.handle_exit_triggered)
         self.connect_action.triggered.connect(self.handle_connect_triggered)
@@ -297,6 +308,33 @@ class MainWindow(QMainWindow):
         self._create_menubar()
         self._create_main_tab()
         self._create_p_sweep_tab()
+
+    def get_sweeps_for_menu(self) -> list[str]:
+        data = h.get_json_data()
+        sweeps = [
+            f'[{d["start"].split(" ")[0]}] {d["start"].split(" ", 1)[1]} - {d["stop"].split(" ", 1)[1]}'
+            for d in data
+        ]
+        return sweeps
+
+    def handle_sweep_selection(self, action: QAction) -> None:
+        i = action.data()
+        sweep = h.get_json_data()[i]
+        print(f'User selected: {sweep}')
+
+    def _refresh_sweep_menu(self) -> None:
+        raw_data = h.get_json_data()
+        self.plot_sweep_submenu.clear()
+        group = QActionGroup(self)
+
+        for index, d in enumerate(raw_data):
+            label = f'[{d["start"].split(" ")[0]}] {d["start"].split(" ", 1)[1]}'
+            action = QAction(label, self)
+            action.setData(index)
+            group.addAction(action)
+            self.plot_sweep_submenu.addAction(action)
+
+        group.triggered.connect(self.handle_sweep_selection)
 
     # --- UI States ---
 
