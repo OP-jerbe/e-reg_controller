@@ -125,16 +125,7 @@ class Controller(QObject):
     def receive_start_pressure_sweep_sig(
         self, span: str, rate: str, direction: str
     ) -> None:
-        # Check if a sweep is already running to prevent duplicates
-        try:
-            if hasattr(self, 'sweep_thread') and self.sweep_thread is not None:
-                if self.sweep_thread.isRunning():
-                    print('Sweep already in progress...')
-                    return
-        except RuntimeError:
-            # This catches cases where the C++ object was deleted but reference remained
-            self.sweep_thread = None
-
+        # Set the UI for pressure sweep
         self.mw.set_pressure_sweep_state()
 
         current_pressure = int(self.mw.pressure_setting_entry.text())
@@ -145,11 +136,11 @@ class Controller(QObject):
         self.sweep_thread.setObjectName('Sweep')
         self.sweep_worker.moveToThread(self.sweep_thread)
 
-        # Stop thread loop
+        # Stop thread loop when sweep is finished
         self.sweep_worker.sweep_finished_sig.connect(self.sweep_thread.quit)
-        # Delete worker
+        # Delete worker when sweep is finished
         self.sweep_worker.sweep_finished_sig.connect(self.sweep_worker.deleteLater)
-        # Delete thread
+        # Delete thread when the thread has finished
         self.sweep_thread.finished.connect(self.sweep_thread.deleteLater)
 
         self.sweep_worker.sweep_finished_sig.connect(self.receive_sweep_finished_sig)
@@ -223,14 +214,11 @@ class Controller(QObject):
 
     @Slot()
     def receive_sweep_finished_sig(self) -> None:
-        print('received sweep_finished_sig')
         self.mw.set_valves_active_state()
         self.mw.sweep_progress_bar.setValue(0)
 
     @Slot()
     def receive_current_pressure_sig(self, pressure: int) -> None:
-        if self.mw.pressure_setting_entry.isEnabled():
-            self.mw.pressure_setting_entry.setEnabled(False)
         self.mw.pressure_setting_entry.setText(str(pressure))
 
     @Slot()
