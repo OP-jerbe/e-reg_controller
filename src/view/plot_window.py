@@ -28,16 +28,17 @@ class PlotWindow(QMainWindow):
 
         fig = Figure(dpi=120)
         ax = fig.add_subplot(111)
+        y_scale = 1e9
 
         x = df['Source Pressure (mBar)'][start_idx:stop_idx]
-        y = df['Beam Current (A)'][start_idx:stop_idx] * 1e9
+        y = df['Beam Current (A)'][start_idx:stop_idx] * y_scale
 
         current_slice = df['Beam Current (A)'][start_idx:stop_idx]
         peak_idx = current_slice.abs().idxmax()
         peak_current = df.loc[peak_idx, 'Beam Current (A)']
         peak_pressure = df.loc[peak_idx, 'Source Pressure (mBar)']
         peak_x = float(cast(float, peak_pressure))
-        peak_y = float(cast(float, peak_current)) * 1e9
+        peak_y = float(cast(float, peak_current)) * y_scale
 
         ax.set_xlabel('Pressure (mBar)')
         ax.set_ylabel('Cup Current (nA)')
