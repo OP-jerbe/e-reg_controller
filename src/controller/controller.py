@@ -51,17 +51,12 @@ class Controller(QObject):
 
         if self.ereg.sock:
             self._init_ereg()
-            self._init_mw()
+            self.mw.set_valves_disabled_state()
 
     def _init_ereg(self) -> None:
         self.ereg.valves_off()
         self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
         self.polling_timer.start()
-
-    def _init_mw(self) -> None:
-        self.mw.operate_btn.setEnabled(True)
-        self.mw.operate_btn.setText('VALVES DISABLED')
-        self.mw.purge_btn.setEnabled(True)
 
     ####################################
     ######### Controller Slots #########
@@ -104,16 +99,9 @@ class Controller(QObject):
                         self.sweep_worker.stop()
         except RuntimeError:
             # This catches cases where the C++ object was deleted but reference remained
-            print('whoopsy-daisy')
             self.sweep_thread = None
             self.sweep_worker = None
-        self.mw.pressure_reading_label.setText('- - - - mBar')
-        self.mw.operate_btn.setChecked(False)
-        self.mw.operate_btn.setText('DISCONNECTED')
-        self.mw.operate_btn.setEnabled(False)
-        self.mw.purge_btn.setEnabled(False)
-        self.mw.sweep_tab.setEnabled(False)
-        self.mw.change_state_image('disabled')
+        self.mw.set_disconnected_state()
         self.mw.error_popup(error)
 
     @Slot()
@@ -124,7 +112,7 @@ class Controller(QObject):
         Stops the timer and shows an popup error message if an unexpected error occurs.
         """
         self.polling_timer.stop()
-        self.mw.pressure_reading_label.setText('---- mBar')
+        self.mw.pressure_reading_label.setText('- - - - mBar')
         self.mw.error_popup(error)
 
     ####################################
@@ -146,6 +134,8 @@ class Controller(QObject):
         except RuntimeError:
             # This catches cases where the C++ object was deleted but reference remained
             self.sweep_thread = None
+
+        self.mw.set_pressure_sweep_state()
 
         current_pressure = int(self.mw.pressure_setting_entry.text())
         self.sweep_worker = SweepWorker(
@@ -233,14 +223,8 @@ class Controller(QObject):
 
     @Slot()
     def receive_sweep_finished_sig(self) -> None:
-        self.mw.operate_btn.setEnabled(True)
-        self.mw.purge_btn.setEnabled(True)
-        self.mw.pressure_setting_entry.setEnabled(True)
-        self.mw.start_sweep_btn.setEnabled(True)
-        self.mw.stop_sweep_btn.setEnabled(False)
-        self.mw.ext_sweep_btn.setEnabled(False)
-        for rb in self.mw.operate_rb_group.buttons():
-            rb.setEnabled(True)
+        print('received sweep_finished_sig')
+        self.mw.set_valves_active_state()
         self.mw.sweep_progress_bar.setValue(0)
 
     @Slot()
@@ -259,47 +243,38 @@ class Controller(QObject):
     def receive_operate_sig(self, checked: bool) -> None:
         if checked:
             self.ereg.valves_on()
-            self.mw.operate_btn.setText('VALVES ACTIVE')
             match self.mw.operate_rb_group.checkedId():
                 case 101:  # PRESSURIZE
-                    self.mw.sweep_tab.setEnabled(True)
                     self.mw.pressurize_sig.emit()
-                    self.mw.change_state_image('pressurized')
                 case 102:  # VENT
                     self.mw.vent_sig.emit()
-                    self.mw.change_state_image('venting')
                 case 103:  # BYPASS
                     self.mw.bypass_sig.emit()
-                    self.mw.change_state_image('bypassed')
+            self.mw.set_valves_active_state()
         else:
             self.ereg.valves_off()
-            self.mw.operate_btn.setText('VALVES DISABLED')
-            self.mw.sweep_tab.setEnabled(False)
-            self.mw.change_state_image('disabled')
+            self.mw.set_valves_disabled_state()
 
     @Slot()
     def receive_pressurize_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
             return
         self.mw.handle_pressure_input()  # set the pressure
-        self.mw.sweep_tab.setEnabled(True)
-        self.mw.change_state_image('pressurized')
+        self.mw.set_pressurize_state()
 
     @Slot()
     def receive_vent_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
             return
         self.ereg.pressure = 0
-        self.mw.sweep_tab.setEnabled(False)
-        self.mw.change_state_image('venting')
+        self.mw.set_vent_state()
 
     @Slot()
     def receive_bypass_sig(self) -> None:
         if not self.mw.operate_btn.isChecked():
             return
         self.ereg.pressure = self.ereg.cal_pressure
-        self.mw.sweep_tab.setEnabled(False)
-        self.mw.change_state_image('bypassed')
+        self.mw.set_bypass_state()
 
     @Slot()
     def receive_purge_start_sig(self) -> None:
@@ -376,7 +351,7 @@ class Controller(QObject):
             return
         self.ereg.ip_address = ip
         self._init_ereg()
-        self._init_mw()
+        self.mw.set_valves_disabled_state()
 
     @Slot()
     def receive_closing_sig(self) -> None:

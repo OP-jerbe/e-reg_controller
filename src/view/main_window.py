@@ -298,6 +298,106 @@ class MainWindow(QMainWindow):
         self._create_main_tab()
         self._create_p_sweep_tab()
 
+    # --- UI States ---
+
+    def set_disconnected_state(self) -> None:
+        # Main tab
+        self.operate_btn.setText('DISCONNECTED')
+        self.operate_btn.setChecked(False)
+        self.operate_btn.setEnabled(False)
+        for rb in self.operate_rb_group.buttons():
+            rb.setEnabled(True)
+        self.purge_btn.setEnabled(False)
+        self.pressure_setting_entry.setEnabled(True)
+        self.pressure_reading_label.setText('- - - - mBar')
+        self.change_state_image('disabled')
+
+        # P. Sweep tab
+        self.sweep_tab.setEnabled(False)
+
+    def set_valves_disabled_state(self) -> None:
+        # Main tab
+        self.operate_btn.setChecked(False)
+        self.operate_btn.setText('VALVES DISABLED')
+        self.operate_btn.setEnabled(True)
+        self.purge_btn.setEnabled(True)
+        for rb in self.operate_rb_group.buttons():
+            rb.setEnabled(True)
+        self.pressure_setting_entry.setEnabled(True)
+        self.change_state_image('disabled')
+
+        # P. Sweep tab
+        self.sweep_tab.setEnabled(False)
+
+    def set_valves_active_state(self) -> None:
+        # Main tab
+        self.operate_btn.setText('VALVES ACTIVE')
+        self.operate_btn.setEnabled(True)
+        for btn in self.operate_rb_group.buttons():
+            btn.setEnabled(True)
+        self.purge_btn.setEnabled(True)
+        match self.operate_rb_group.checkedId():
+            case 101:
+                self.set_pressurize_state()
+            case 102:
+                self.set_vent_state()
+            case 103:
+                self.set_bypass_state()
+        self.pressure_setting_entry.setEnabled(True)
+
+    def set_pressurize_state(self) -> None:
+        # Main tab
+        if self.operate_btn.isEnabled() and self.operate_btn.isChecked():
+            self.change_state_image('pressurized')
+
+        # P. Sweep tab
+        self.sweep_tab.setEnabled(True)
+        self.span_entry.setEnabled(True)
+        self.rate_entry.setEnabled(True)
+        for btn in self.sweep_rb_group.buttons():
+            btn.setEnabled(True)
+        self.ext_sweep_btn.setEnabled(False)
+        self.start_sweep_btn.setEnabled(True)
+        self.stop_sweep_btn.setEnabled(False)
+
+    def set_vent_state(self) -> None:
+        # Main tab
+        if self.operate_btn.isEnabled() and self.operate_btn.isChecked():
+            self.change_state_image('venting')
+
+        # P. Sweep tab
+        self.sweep_tab.setEnabled(False)
+
+    def set_bypass_state(self) -> None:
+        # Main tab
+        if self.operate_btn.isEnabled() and self.operate_btn.isChecked():
+            self.change_state_image('bypassed')
+
+        # P. Sweep tab
+        self.sweep_tab.setEnabled(False)
+
+    def set_pressure_sweep_state(self) -> None:
+        # Main tab
+        self.operate_btn.setEnabled(False)
+        for rb in self.operate_rb_group.buttons():
+            rb.setEnabled(False)
+        self.purge_btn.setEnabled(False)
+        self.pressure_setting_entry.setEnabled(False)
+
+        # P. Sweep tab
+        for btn in self.sweep_rb_group.buttons():
+            btn.setEnabled(False)
+        self.ext_sweep_btn.setEnabled(True)
+        self.start_sweep_btn.setEnabled(False)
+        self.stop_sweep_btn.setEnabled(True)
+
+    def change_state_image(
+        self, state: Literal['disabled', 'pressurized', 'venting', 'bypassed']
+    ) -> None:
+        new_img = h.get_state_img(state)
+        self.state_img = new_img
+        self.image_label.update_pixmap(new_img)
+
     # --- Main tab methods ---
 
     def handle_rb_selected(self, id: int) -> None:
@@ -359,13 +459,6 @@ class MainWindow(QMainWindow):
         if self.operate_btn.isChecked():
             self.purge_stop_sig.emit()
 
-    def change_state_image(
-        self, state: Literal['disabled', 'pressurized', 'venting', 'bypassed']
-    ) -> None:
-        new_img = h.get_state_img(state)
-        self.state_img = new_img
-        self.image_label.update_pixmap(new_img)
-
     # --- Pressure Sweep tab methods ---
 
     def _check_span(self) -> bool:
@@ -397,23 +490,23 @@ class MainWindow(QMainWindow):
                 direction = 'H2L'
             case 202:
                 direction = 'L2H'
-        self.operate_btn.setEnabled(False)
-        self.start_sweep_btn.setEnabled(False)
-        self.stop_sweep_btn.setEnabled(True)
-        self.purge_btn.setEnabled(False)
-        self.ext_sweep_btn.setEnabled(True)
-        for rb in self.operate_rb_group.buttons():
-            rb.setEnabled(False)
+        # self.operate_btn.setEnabled(False)
+        # self.start_sweep_btn.setEnabled(False)
+        # self.stop_sweep_btn.setEnabled(True)
+        # self.purge_btn.setEnabled(False)
+        # self.ext_sweep_btn.setEnabled(True)
+        # for rb in self.operate_rb_group.buttons():
+        #     rb.setEnabled(False)
         self.start_pressure_sweep_sig.emit(span, rate, direction)
 
     def handle_stop_sweep_btn_clicked(self) -> None:
-        self.start_sweep_btn.setEnabled(True)
-        self.stop_sweep_btn.setEnabled(False)
-        self.ext_sweep_btn.setEnabled(False)
-        for rb in self.operate_rb_group.buttons():
-            rb.setEnabled(True)
-        self.operate_btn.setEnabled(True)
-        self.purge_btn.setEnabled(True)
+        # self.start_sweep_btn.setEnabled(True)
+        # self.stop_sweep_btn.setEnabled(False)
+        # self.ext_sweep_btn.setEnabled(False)
+        # for rb in self.operate_rb_group.buttons():
+        #     rb.setEnabled(True)
+        # self.operate_btn.setEnabled(True)
+        # self.purge_btn.setEnabled(True)
         self.stop_pressure_sweep_sig.emit()
 
     def handle_ext_sweep_btn_clicked(self) -> None:
