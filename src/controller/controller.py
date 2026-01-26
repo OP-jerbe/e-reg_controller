@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from PySide6.QtCore import QObject, QThread, QThreadPool, QTimer, Slot
 
 import src.helpers.helpers as h
@@ -386,3 +389,30 @@ class Controller(QObject):
     def receive_stop_bleed_supply_sig(self) -> None:
         self.mw.change_state_image('pressurized')
         self.bleed_supply_timer.stop()
+
+    # --- Plot Pressure Sweep ---
+
+    def save_sweep_times(self, start_time: str, stop_time: str) -> None:
+        filename = 'history.json'
+        filepath: Path = h.get_root_dir() / filename
+        new_entry: dict[str, str] = {'start': start_time, 'stop': stop_time}
+
+        # 1. Load existing data or start a new list
+        if Path(filepath).exists():
+            with open(filepath, 'r') as file:
+                try:
+                    data = json.load(file)
+                except json.JSONDecodeError:
+                    data = []
+        else:
+            data = []
+
+        # 2. Add the new session to the end
+        data.insert(0, new_entry)
+
+        # 3. Keep only the most recent 5 entries
+        data = data[:5]
+
+        # 4. Save the updated list back to the file
+        with open(filename, 'w') as file:
+            json.dump(data, file, indent=4)
