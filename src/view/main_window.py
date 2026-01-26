@@ -500,13 +500,6 @@ class MainWindow(QMainWindow):
         self.start_pressure_sweep_sig.emit(span, rate, direction)
 
     def handle_stop_sweep_btn_clicked(self) -> None:
-        # self.start_sweep_btn.setEnabled(True)
-        # self.stop_sweep_btn.setEnabled(False)
-        # self.ext_sweep_btn.setEnabled(False)
-        # for rb in self.operate_rb_group.buttons():
-        #     rb.setEnabled(True)
-        # self.operate_btn.setEnabled(True)
-        # self.purge_btn.setEnabled(True)
         self.stop_pressure_sweep_sig.emit()
 
     def handle_ext_sweep_btn_clicked(self) -> None:
