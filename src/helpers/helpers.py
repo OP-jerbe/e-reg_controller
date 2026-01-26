@@ -1,3 +1,4 @@
+import json
 import sys
 from configparser import ConfigParser
 from importlib.metadata import PackageNotFoundError, version
@@ -192,8 +193,19 @@ def convert_mbar_to_psi(pressure: float) -> float:
     return round(pressure * 1.45038e-2, 2)
 
 
+def get_json_data() -> list[dict[str, str]]:
+    filepath: Path = get_root_dir() / 'data_cache' / 'history.json'
+    with open(filepath, 'r') as f:
+        data: list[dict[str, str]] = json.load(f)
+    return data
+
+
 if __name__ == '__main__':
-    # How to get the data in the ini file
-    config_data = load_ini()
-    IPAddress = config_data.get('IPAddress', 'IPAddress')
-    print(IPAddress)
+    # --- How to get the data in the ini file ---
+    # config_data = load_ini()
+    # IPAddress = config_data.get('IPAddress', 'IPAddress')
+    # print(IPAddress)
+
+    # --- Data from history.json ---
+    data = get_json_data()
+    print(data)
