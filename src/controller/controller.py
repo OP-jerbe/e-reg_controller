@@ -35,7 +35,7 @@ class Controller(QObject):
         self.polling_worker.moveToThread(self.worker_thread)
 
         self.mw.closing_sig.connect(self.receive_closing_sig)
-        self.mw.new_address_sig.connect(self.receive_new_address_sig)
+        self.mw.try_to_connect_sig.connect(self.receive_try_to_connect_sig)
         self.mw.pressure_change_sig.connect(self.receive_pressure_change_sig)
         self.mw.operate_sig.connect(self.receive_operate_sig)
         self.mw.pressurize_sig.connect(self.receive_pressurize_sig)
@@ -324,7 +324,7 @@ class Controller(QObject):
         self.ereg.pressure = p
 
     @Slot()
-    def receive_new_address_sig(self, ip: str, port: int) -> None:
+    def receive_try_to_connect_sig(self, ip: str, port: int) -> None:
         """
         Signal received from the `MainWindow` class.
 

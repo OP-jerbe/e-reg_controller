@@ -15,7 +15,7 @@ from qt_material import apply_stylesheet
 
 
 class ReconnectWindow(QMainWindow):
-    new_address_sig = Signal(str, str)  # ip address, port
+    try_to_connect_sig = Signal(str, str)  # ip address, port
 
     def __init__(
         self, parent: QWidget, ip: str, port: int, sock: SocketType | None
@@ -86,6 +86,6 @@ class ReconnectWindow(QMainWindow):
         if self.connect_clicked:
             ip = self.ip_entry.text()
             port = self.port_entry.text()
-            self.new_address_sig.emit(ip, port)
+            self.try_to_connect_sig.emit(ip, port)
         event.accept()
         super().closeEvent(event)

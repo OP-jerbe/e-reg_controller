@@ -33,7 +33,7 @@ from src.view.scrolling_line_edit import ScrollingLineEdit
 
 class MainWindow(QMainWindow):
     closing_sig = Signal()
-    new_address_sig = Signal(str, int)
+    try_to_connect_sig = Signal(str, int)
     pressure_change_sig = Signal(str, str)
     operate_sig = Signal(bool)
     pressurize_sig = Signal()
@@ -542,18 +542,18 @@ class MainWindow(QMainWindow):
         port = self.ereg.PORT
         sock = self.ereg.sock
         recon_window = ReconnectWindow(self, ip, port, sock)
-        recon_window.new_address_sig.connect(self.receive_new_address_sig)
+        recon_window.try_to_connect_sig.connect(self.receive_try_to_connect_sig)
         recon_window.show()
 
     @Slot()
-    def receive_new_address_sig(self, ip: str, port: str) -> None:
+    def receive_try_to_connect_sig(self, ip: str, port: str) -> None:
         """
         Signal received from `ReconnectWindow`.
 
         Passes along the `ip` address and `port` number from
         the `ReconnectWindow` to the `Controller`.
         """
-        self.new_address_sig.emit(ip, int(port))
+        self.try_to_connect_sig.emit(ip, int(port))
 
     # --- Exit/Closing Application ---
 
