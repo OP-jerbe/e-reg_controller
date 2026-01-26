@@ -194,15 +194,12 @@ class Controller(QObject):
         if self.sweep_worker:
             direction_val = self.sweep_worker.direction_val
             starting_p_setting = self.sweep_worker.starting_pressure
-        print(f'{direction_val = }')
 
         current_span = int(self.mw.span_entry.text())
         starting_target = starting_p_setting + (current_span * direction_val)
-        print(f'{starting_target = }')
 
         new_span = current_span + value
         attempted_target = starting_p_setting + (new_span * direction_val)
-        print(f'{attempted_target = }')
 
         if attempted_target > 3033:
             # self.mw.span_error_popup(new_span, 'L2H')
