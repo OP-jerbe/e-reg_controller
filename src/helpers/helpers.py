@@ -230,6 +230,25 @@ def select_folder(default_dir: str | None = None) -> str:
     return folder_path
 
 
+def select_save_folder(default_dir: str | None = None) -> str:
+    """
+    Open a file dialog to select a folder.
+
+    Returns:
+        str: The path to the selected folder. If the dialog is cancelled,
+             an empty string is returned.
+    """
+    if not default_dir:
+        default_dir = ''
+    filepath, _ = QFileDialog.getSaveFileName(
+        parent=None,
+        caption='Save Plot',
+        dir=default_dir,
+        filter='PNG Files (*.png);;PDF Files (*.pdf);;All Files (*)',
+    )
+    return filepath
+
+
 if __name__ == '__main__':
     # --- How to get the data in the ini file ---
     # config_data = load_ini()
