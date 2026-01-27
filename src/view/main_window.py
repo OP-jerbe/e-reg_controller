@@ -61,6 +61,8 @@ class MainWindow(QMainWindow):
         self.ereg = model
         self.last_valid_pressure = ''
         self.sweep_list = self.get_sweeps_for_menu()
+        self.peak_current = float('nan')
+        self.peak_pressure = float('nan')
         self._create_gui()
 
     # --- GUI creation methods ---
@@ -325,8 +327,9 @@ class MainWindow(QMainWindow):
         filepath = h.select_file()
         if not filepath:
             return
+        plot_window = PlotWindow(self)
         try:
-            fig = PlotWindow.create_fig(
+            fig = plot_window.create_fig(
                 filepath, sweep['start'], sweep['stop'], sweep['direction']
             )
         except Exception as e:
@@ -334,7 +337,8 @@ class MainWindow(QMainWindow):
             self.error_popup(error_message)
             return
         fig_canvas = FigureCanvas(fig)
-        plot_window = PlotWindow(self, fig_canvas)
+        plot_window.fig_canvas = fig_canvas
+        plot_window.create_gui()
         plot_window.show()
 
     def _refresh_sweep_menu(self) -> None:
