@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "e_reg_controller"
-version = "1.1.0"
+version = "1.2.0"
 description = "A GUI for controlling the ProportionAir electronic gas regulator"
 authors = [{ name = "Joshua Erbe", email = "j.erbe@oregon-physics.com" }]
 dependencies = ["pyside6 ~= 6.9.0", "qt-material == 2.14"]
