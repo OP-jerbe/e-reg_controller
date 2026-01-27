@@ -247,7 +247,7 @@ class eReg:
 
         Args:
             value (int): The pressure setting in psig the device goes to if there is a fault or power loss.
-                Must be be between 0 and the calibrated pressure (set in config.ini file).
+                Must be be between 0 and the calibrated pressure.
         """
         if not isinstance(value, int):
             raise ValueError(f'Received {type(value).__name__} but expected int.')
@@ -318,7 +318,7 @@ class eReg:
 
         Args:
             value (int): The pressure setting in psig.
-                Must be between 0 and the calibrated pressure (set in the config.ini file).
+                Must be between 0 and the calibrated pressure.
         """
         if not isinstance(value, int | float):
             raise ValueError(
