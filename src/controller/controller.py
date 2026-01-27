@@ -17,6 +17,7 @@ class Controller(QObject):
         super().__init__()
         self.ereg = model
         self.mw = view
+        self.command_offset_cal: int = self._set_command_offset()
 
         self.worker_thread = QThread()
         self.worker_thread.setObjectName('Pressure Reading')
@@ -65,6 +66,11 @@ class Controller(QObject):
         self.ereg.valves_off()
         self.ereg.cal_pressure = float(self.ereg.calibration_pressure)
         self.polling_timer.start()
+
+    def _set_command_offset(self) -> int:
+        config_data = h.load_ini()
+        value = config_data.get('CommandOffsetCal', 'value')
+        return int(value)
 
     ####################################
     ######### Controller Slots #########
@@ -322,7 +328,7 @@ class Controller(QObject):
             self.mw.pressure_setting_entry.setText(old_pressure)
             return
 
-        p = int(new_pressure)
+        p = int(new_pressure) + self.command_offset_cal
         if not 0 <= p <= 3033:
             self.mw.pressure_setting_entry.setText(old_pressure)
             error_msg = (

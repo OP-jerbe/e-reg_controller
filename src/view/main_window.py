@@ -63,7 +63,13 @@ class MainWindow(QMainWindow):
         self.sweep_list = self.get_sweeps_for_menu()
         self.peak_current = float('nan')
         self.peak_pressure = float('nan')
+        self.reading_offset_cal: int = self._set_reading_offset()
         self._create_gui()
+
+    def _set_reading_offset(self) -> int:
+        config_data = h.load_ini()
+        value = config_data.get('ReadingOffsetCal', 'value')
+        return int(value)
 
     # --- GUI creation methods ---
 
@@ -473,7 +479,7 @@ class MainWindow(QMainWindow):
         Args:
             pressure (float): The pressure reading from the e-reg in PSI.
         """
-        pressure_mbar = h.convert_psi_to_mbar(pressure)
+        pressure_mbar = h.convert_psi_to_mbar(pressure) - self.reading_offset_cal
         text = f'{pressure_mbar:.0f} mBar'
         self.pressure_reading_label.setText(text)
 
