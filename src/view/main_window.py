@@ -330,7 +330,8 @@ class MainWindow(QMainWindow):
     def handle_sweep_selection(self, action: QAction) -> None:
         i = action.data()
         sweep = h.get_json_data()[i]
-        filepath = h.select_file()
+        default_dir = r'C://TeststandData'
+        filepath = h.select_file(default_dir)
         if not filepath:
             return
         plot_window = PlotWindow(self)
