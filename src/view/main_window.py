@@ -73,17 +73,17 @@ class MainWindow(QMainWindow):
         reconnect with the e-reg if the connection is lost or to exit
         the application.
         """
-        self.exit_action = QAction(text='Exit', parent=self)
-        self.connect_action = QAction(text='Connect', parent=self)
-        self.bleed_supply_action = QAction(text='Bleed Supply', parent=self)
+        self.exit_action = QAction(text='&Exit', parent=self)
+        self.connect_action = QAction(text='&Connect', parent=self)
+        self.bleed_supply_action = QAction(text='&Bleed Supply', parent=self)
         self.bleed_supply_action.setCheckable(True)
 
-        self.plot_sweep_submenu = QMenu('Plot Sweep', self)
+        self.plot_sweep_submenu = QMenu('&Plot Sweep', self)
         self.plot_sweep_submenu.aboutToShow.connect(self._refresh_sweep_menu)
 
         self.menu_bar = self.menuBar()
-        self.file_menu = self.menu_bar.addMenu('File')
-        self.options_menu = self.menu_bar.addMenu('Options')
+        self.file_menu = self.menu_bar.addMenu('&File')
+        self.options_menu = self.menu_bar.addMenu('&Options')
         self.options_menu.addMenu(self.plot_sweep_submenu)
 
         self.file_menu.addAction(self.connect_action)
