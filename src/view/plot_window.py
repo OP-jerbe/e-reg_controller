@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import cast
 
 import pandas as pd
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -14,22 +13,24 @@ from PySide6.QtWidgets import (
 )
 from qt_material import apply_stylesheet
 
+import src.helpers.helpers as h
+
 
 class PlotWindow(QMainWindow):
     """
     Shows a plot from the hyperion test stand software csv.
 
     Example usage:
-        >>> filepath = "path/to/hyperion/csv.csv"
-        >>> sweep_start = "1/1/2026 9:03:24 AM"
-        >>> sweep_stop = "1/1/2026 9:10:03 AM"
-        >>> direction = "H2L"  # or "L2H"
-        >>> plot_window = PlotWindow(parent=self)
-        >>> fig = plot_window.create_fig(filepath, sweep_start, sweep_stop)
-        >>> fig_canvas = FigureCanvas(fig)
-        >>> plot_window.fig_canvas = fig_canvas
-        >>> plot_window.create_gui()
-        >>> plot_window.show()
+    >>> filepath = "path/to/hyperion/csv.csv"
+    >>> sweep_start = "1/1/2026 9:03:24 AM"
+    >>> sweep_stop = "1/1/2026 9:10:03 AM"
+    >>> direction = "H2L"  # or "L2H"
+    >>> plot_window = PlotWindow(self)  # `self` would be a QWidget parent object
+    >>> fig = plot_window.create_fig(filepath, sweep_start, sweep_stop, direction)
+    >>> fig_canvas = FigureCanvas(fig)
+    >>> plot_window.fig_canvas = fig_canvas
+    >>> plot_window.create_gui()
+    >>> plot_window.show()
     """
 
     def __init__(self, parent: QWidget) -> None:
@@ -55,9 +56,9 @@ class PlotWindow(QMainWindow):
         date = start_time.split()[0]
         start = f'{start_time.split()[1]} {start_time.split()[2]}'
         stop = f'{stop_time.split()[1]} {stop_time.split()[2]}'
-        fig_title = f'{direction} sweep of {sn} on {date} {start} - {stop}'
+        self.fig_title = f'{direction} sweep of {sn} on {date} {start} - {stop}'
 
-        fig.suptitle(fig_title, size=15)
+        fig.suptitle(self.fig_title, size=15)
 
         x = df['Source Pressure (mBar)'][start_idx:stop_idx]
 
@@ -68,6 +69,19 @@ class PlotWindow(QMainWindow):
         peak_idx = y_cup.abs().idxmax()
         self.peak_current = df.loc[peak_idx, 'Beam Current (A)']
         self.peak_pressure = df.loc[peak_idx, 'Source Pressure (mBar)']
+
+        # Place the text box
+        # transform=ax_cup.transAxes tells matplotlib to use (0,0) to (1,1) coordinates
+        ax_cup.text(
+            0.95,
+            0.95,
+            f'Peak P: {self.peak_pressure:.2e} mBar',
+            transform=ax_cup.transAxes,
+            fontsize=10,
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5),
+        )
 
         ax_cup.set_title('Cup Current (nA)')
         ax_cup.plot(x, y_cup, c='r')
@@ -91,6 +105,19 @@ class PlotWindow(QMainWindow):
         y_ang = df['Angular Intensity (mA/str)'][start_idx:stop_idx]
         peak_idx = y_ang.abs().idxmax()
         self.peak_ang_int = df.loc[peak_idx, 'Angular Intensity (mA/str)']
+
+        # Place the text box
+        # transform=ax_cup.transAxes tells matplotlib to use (0,0) to (1,1) coordinates
+        ax_ang.text(
+            0.95,
+            0.95,
+            f"Peak I': {self.peak_ang_int:.2f} mA/sr",
+            transform=ax_ang.transAxes,
+            fontsize=10,
+            verticalalignment='top',
+            horizontalalignment='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5),
+        )
 
         ax_ang.set_title('Ang Int (mA/sr)')
         ax_ang.plot(x, y_ang, c='r')
@@ -119,12 +146,20 @@ class PlotWindow(QMainWindow):
             self.styleSheet() + 'QLineEdit, QTextEdit, QSpinBox {color: lightgreen;}'
         )
 
+        # --- Create Menu Bar ---
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu('&File')
+
+        save_action = file_menu.addAction('&Save Plot')
+        save_action.setShortcut('Ctrl+S')
+        save_action.triggered.connect(self.handle_save_plot_clicked)
+
         peak_pressure_label = QLabel(f'Peak Pressure: {self.peak_pressure:.2e} mBar')
-        peak_pressure_label.setStyleSheet('font-size: 18pt;')
+        peak_pressure_label.setStyleSheet('font-size: 16pt;')
         peak_current_label = QLabel(f'Peak Current: {self.peak_current:.2f} nA')
-        peak_current_label.setStyleSheet('font-size: 18pt;')
+        peak_current_label.setStyleSheet('font-size: 16pt;')
         peak_ang_int_label = QLabel(f"Peak I' = {self.peak_ang_int:.2f} mA/sr")
-        peak_ang_int_label.setStyleSheet('font-size: 18pt;')
+        peak_ang_int_label.setStyleSheet('font-size: 16pt;')
 
         peak_layout = QHBoxLayout()
         peak_layout.addWidget(peak_pressure_label)
@@ -140,3 +175,10 @@ class PlotWindow(QMainWindow):
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
+
+    def handle_save_plot_clicked(self) -> None:
+        default_name = self.fig_title.replace('/', '_').replace(':', '_')
+        filepath = h.select_save_folder(default_name)
+        if not filepath:
+            return
+        self.fig_canvas.figure.savefig(filepath, dpi=300)
